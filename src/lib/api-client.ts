@@ -68,17 +68,13 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ email, username, password, walletAddress }),
     });
-    const result = await this.parseResponse<{
-      id: string; email: string; username: string; walletAddress: string | null;
-      plan: string; solBalance: number; stats: Record<string, unknown>;
-    } & { [key: string]: unknown }>(response);
-    
-    if (result.data && !result.error) {
-      const fullResult = await response.json();
-      this.setSessionToken(fullResult.sessionToken);
-      return { ...result, sessionToken: fullResult.sessionToken };
+    const json = await response.json();
+    if (!response.ok) {
+      return { data: null, error: json.error || 'Registration failed', sessionToken: null };
     }
-    return result;
+    const sessionToken = json.sessionToken || null;
+    if (sessionToken) this.setSessionToken(sessionToken);
+    return { data: json.data as Record<string, unknown>, error: null, sessionToken };
   }
 
   async loginWithEmail(email: string, password: string) {
@@ -86,17 +82,13 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-    const result = await this.parseResponse<{
-      id: string; email: string; username: string; walletAddress: string | null;
-      plan: string; solBalance: number; stats: Record<string, unknown>;
-    } & { [key: string]: unknown }>(response);
-    
-    if (result.data && !result.error) {
-      const fullResult = await response.json();
-      this.setSessionToken(fullResult.sessionToken);
-      return { ...result, sessionToken: fullResult.sessionToken };
+    const json = await response.json();
+    if (!response.ok) {
+      return { data: null, error: json.error || 'Login failed', sessionToken: null };
     }
-    return result;
+    const sessionToken = json.sessionToken || null;
+    if (sessionToken) this.setSessionToken(sessionToken);
+    return { data: json.data as Record<string, unknown>, error: null, sessionToken };
   }
 
   async loginWithWallet(walletAddress: string) {
@@ -104,17 +96,13 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify({ walletAddress }),
     });
-    const result = await this.parseResponse<{
-      id: string; email: string; username: string; walletAddress: string | null;
-      plan: string; solBalance: number; stats: Record<string, unknown>;
-    } & { [key: string]: unknown }>(response);
-    
-    if (result.data && !result.error) {
-      const fullResult = await response.json();
-      this.setSessionToken(fullResult.sessionToken);
-      return { ...result, sessionToken: fullResult.sessionToken };
+    const json = await response.json();
+    if (!response.ok) {
+      return { data: null, error: json.error || 'Wallet login failed', sessionToken: null };
     }
-    return result;
+    const sessionToken = json.sessionToken || null;
+    if (sessionToken) this.setSessionToken(sessionToken);
+    return { data: json.data as Record<string, unknown>, error: null, sessionToken };
   }
 
   async logout() {

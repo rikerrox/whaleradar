@@ -141,8 +141,8 @@ export function AuthModal() {
       setRegError('Password is required');
       return;
     }
-    if (regPassword.length < 6) {
-      setRegError('Password must be at least 6 characters');
+    if (regPassword.length < 8) {
+      setRegError('Password must be at least 8 characters');
       return;
     }
 
@@ -454,7 +454,7 @@ export function AuthModal() {
                     <Input
                       id="reg-password"
                       type={showRegPassword ? 'text' : 'password'}
-                      placeholder="Min. 6 characters"
+                      placeholder="Min. 8 characters"
                       value={regPassword}
                       onChange={(e) => { setRegPassword(e.target.value); setRegError(''); }}
                       className="pl-9 pr-10 h-10 bg-white/5 border-white/10 placeholder:text-muted-foreground/40 focus:border-purple-500/50 focus:ring-purple-500/20"

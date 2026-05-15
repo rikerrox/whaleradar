@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { createUserWithEmail } from '@/lib/auth';
+import { createUserWithEmail, generateSessionToken } from '@/lib/auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Create a session token
-    const sessionToken = crypto.randomUUID();
+    const sessionToken = generateSessionToken();
     const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000); // 30 days
     await db.session.create({
       data: {

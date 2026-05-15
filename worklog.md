@@ -75,3 +75,24 @@ Stage Summary:
 - Copy trade execution engine with balance checks, plan limits, and transaction logging
 - All frontend views connected to backend APIs
 - Complete user flow: Register -> Login -> Deposit SOL -> Upgrade Plan -> Execute Copy Trades
+
+---
+Task ID: 5
+Agent: Main Orchestrator
+Task: Fix demo mode login issues
+
+Work Log:
+- Diagnosed critical bug: `api-client.ts` register(), loginWithEmail(), loginWithWallet() methods called response.json() twice — once inside parseResponse() and again to extract sessionToken. Since Response.body can only be consumed once, the second call always fails, breaking ALL auth flows including demo mode login.
+- Fixed api-client.ts: Rewrote register(), loginWithEmail(), loginWithWallet() to read JSON once and extract both data and sessionToken from the single parsed response
+- Fixed password validation mismatch: Client-side auth-modal.tsx required 6 chars but server required 8 chars. Updated client to match server (8 chars minimum)
+- Updated placeholder text from "Min. 6 characters" to "Min. 8 characters"
+- Fixed session token generation inconsistency: Register route used crypto.randomUUID() while login used generateSessionToken(). Updated register to use generateSessionToken() for consistency
+- Verified: Demo mode login now works — wallet login returns 404 (expected), falls back to register which succeeds (201), second attempt gets 409 (expected)
+- ESLint passes clean, no compilation errors
+
+Stage Summary:
+- Root cause: Double response.json() consumption bug in api-client.ts
+- All three auth methods (register, loginWithEmail, loginWithWallet) fixed
+- Password validation now consistent (8 chars min) between client and server
+- Session token generation now consistent (generateSessionToken) between register and login
+- Demo mode login flow now works end-to-end
