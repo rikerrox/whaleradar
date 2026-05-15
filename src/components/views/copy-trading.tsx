@@ -1,27 +1,29 @@
 'use client';
 
 import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Slider } from '@/components/ui/slider';
-import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Copy, Zap, Shield, TrendingUp, TrendingDown, Settings2,
   Play, Pause, Trash2, RefreshCw, AlertTriangle, Check,
   X, Wallet, ArrowUpRight, ArrowDownRight, Clock,
   DollarSign, Percent, Activity, Eye, ChevronRight,
-  Plus, StopCircle, Gauge,
+  Plus, StopCircle, Gauge, Loader2,
 } from 'lucide-react';
-import { shortAddress, randomBetween } from '@/lib/mock-data';
+import { shortAddress, randomBetween, TOKEN_SYMBOLS, TOKEN_NAMES } from '@/lib/mock-data';
+import { toast } from 'sonner';
+import type { CopyTrade, AlertItem } from '@/lib/types';
 
-function CopyTradeCard({ trade }: { trade: any }) {
+function CopyTradeCard({ trade }: { trade: CopyTrade }) {
+  const { updateCopyTradeStatus, addAlert } = useAppStore();
+
   const statusConfig: Record<string, { color: string; bg: string; icon: any }> = {
     executed: { color: 'text-green-400', bg: 'bg-green-500/20 border-green-500/30', icon: Check },
     pending: { color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/30', icon: Clock },
@@ -30,6 +32,32 @@ function CopyTradeCard({ trade }: { trade: any }) {
   };
   const config = statusConfig[trade.status] || statusConfig.pending;
   const StatusIcon = config.icon;
+
+  const handleCancel = () => {
+    updateCopyTradeStatus(trade.id, 'cancelled');
+    toast.info('Copy trade cancelled', { description: `${trade.tokenSymbol} copy trade has been cancelled.` });
+  };
+
+  const handleRetry = () => {
+    updateCopyTradeStatus(trade.id, 'pending');
+    toast.info('Retrying copy trade...', { description: `Re-attempting ${trade.tokenSymbol} copy trade.` });
+    // Simulate execution after 2 seconds
+    setTimeout(() => {
+      const pnl = randomBetween(-50, 200);
+      updateCopyTradeStatus(trade.id, 'executed', pnl);
+      addAlert({
+        id: `alert-${Date.now()}`,
+        type: 'copy_trade',
+        title: 'Copy Trade Executed',
+        message: `Copied ${trade.whaleLabel}: ${trade.type === 'buy' ? 'Bought' : 'Sold'} ${trade.tokenSymbol} worth ${trade.amount} SOL`,
+        token: trade.tokenSymbol,
+        isRead: false,
+        channel: 'browser',
+        timestamp: new Date(),
+      });
+      toast.success('Copy trade executed!', { description: `${trade.tokenSymbol} - PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` });
+    }, 2000);
+  };
 
   return (
     <motion.div
@@ -46,7 +74,7 @@ function CopyTradeCard({ trade }: { trade: any }) {
             <div className="flex items-center gap-2">
               <span className="font-semibold">{trade.tokenSymbol}</span>
               <Badge className={`text-[10px] h-5 ${config.bg} ${config.color} border`}>
-                <StatusIcon className="w-3 h-3 mr-0.5" />
+                {trade.status === 'pending' ? <Loader2 className="w-3 h-3 mr-0.5 animate-spin" /> : <StatusIcon className="w-3 h-3 mr-0.5" />}
                 {trade.status}
               </Badge>
             </div>
@@ -82,14 +110,17 @@ function CopyTradeCard({ trade }: { trade: any }) {
           <Eye className="w-3 h-3 mr-1" /> View
         </Button>
         {trade.status === 'pending' && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-400 hover:text-red-300">
+          <Button variant="ghost" size="sm" className="h-7 text-xs text-red-400 hover:text-red-300" onClick={handleCancel}>
             <Trash2 className="w-3 h-3 mr-1" /> Cancel
           </Button>
         )}
         {trade.status === 'failed' && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-yellow-400 hover:text-yellow-300">
+          <Button variant="ghost" size="sm" className="h-7 text-xs text-yellow-400 hover:text-yellow-300" onClick={handleRetry}>
             <RefreshCw className="w-3 h-3 mr-1" /> Retry
           </Button>
+        )}
+        {trade.status === 'executed' && trade.pnl !== null && trade.pnl > 0 && (
+          <Badge className="text-[9px] bg-green-500/20 text-green-400 border-green-500/30">Profitable</Badge>
         )}
       </div>
     </motion.div>
@@ -97,12 +128,95 @@ function CopyTradeCard({ trade }: { trade: any }) {
 }
 
 function NewCopyTradeForm() {
+  const { whales, addCopyTrade, addAlert, walletBalance } = useAppStore();
+  const [selectedWhaleId, setSelectedWhaleId] = useState('');
   const [copyPercent, setCopyPercent] = useState([50]);
   const [stopLoss, setStopLoss] = useState([15]);
   const [takeProfit, setTakeProfit] = useState([50]);
   const [maxPosition, setMaxPosition] = useState([10]);
   const [slippage, setSlippage] = useState([1]);
   const [gasPriority, setGasPriority] = useState('medium');
+  const [isCreating, setIsCreating] = useState(false);
+  const [tokenSymbol, setTokenSymbol] = useState('');
+  const [tradeType, setTradeType] = useState<'buy' | 'sell'>('buy');
+
+  const handleStartCopyTrade = async () => {
+    if (!selectedWhaleId) {
+      toast.error('Select a whale wallet', { description: 'Please select a whale to copy trade from.' });
+      return;
+    }
+    if (!tokenSymbol.trim()) {
+      toast.error('Enter a token symbol', { description: 'Please enter the token symbol you want to trade.' });
+      return;
+    }
+
+    const whale = whales.find(w => w.id === selectedWhaleId);
+    if (!whale) return;
+
+    setIsCreating(true);
+
+    // Simulate creating the trade
+    await new Promise(resolve => setTimeout(resolve, 1500));
+
+    const amount = Math.min(maxPosition[0] * (copyPercent[0] / 100), walletBalance * 0.5);
+    const newTrade: CopyTrade = {
+      id: `ct-${Date.now()}`,
+      whaleWalletId: whale.id,
+      whaleLabel: whale.label,
+      tokenSymbol: tokenSymbol.toUpperCase(),
+      tokenName: TOKEN_NAMES[TOKEN_SYMBOLS.indexOf(tokenSymbol.toUpperCase())] || tokenSymbol.toUpperCase(),
+      type: tradeType,
+      amount: Number(amount.toFixed(2)),
+      copyPercent: copyPercent[0],
+      status: 'pending',
+      pnl: null,
+      txHash: null,
+      createdAt: new Date(),
+    };
+
+    addCopyTrade(newTrade);
+    toast.success('Copy trade created!', { 
+      description: `${tradeType === 'buy' ? 'Buying' : 'Selling'} ${tokenSymbol.toUpperCase()} — copying ${whale.label} at ${copyPercent[0]}%` 
+    });
+
+    // Simulate execution after 3 seconds
+    setTimeout(() => {
+      const pnl = randomBetween(-80, 250);
+      updateCopyTradeStatusSim(newTrade.id, pnl);
+    }, 3000);
+
+    setIsCreating(false);
+    setTokenSymbol('');
+  };
+
+  const updateCopyTradeStatusSim = (id: string, pnl: number) => {
+    const { updateCopyTradeStatus, addAlert } = useAppStore.getState();
+    const success = Math.random() > 0.15; // 85% success rate
+    if (success) {
+      updateCopyTradeStatus(id, 'executed', pnl);
+      const trade = useAppStore.getState().copyTrades.find(t => t.id === id);
+      if (trade) {
+        addAlert({
+          id: `alert-${Date.now()}`,
+          type: 'copy_trade',
+          title: 'Copy Trade Executed',
+          message: `Copied ${trade.whaleLabel}: ${trade.type === 'buy' ? 'Bought' : 'Sold'} ${trade.tokenSymbol} worth ${trade.amount} SOL`,
+          token: trade.tokenSymbol,
+          isRead: false,
+          channel: 'browser',
+          timestamp: new Date(),
+        });
+        toast.success('Trade executed!', { 
+          description: `${trade.tokenSymbol} copy trade filled. PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` 
+        });
+      }
+    } else {
+      updateCopyTradeStatus(id, 'failed');
+      toast.error('Trade failed', { description: 'The copy trade could not be executed. Try retrying.' });
+    }
+  };
+
+  const followedWhales = whales.filter(w => w.isFollowed);
 
   return (
     <Card className="glass-card">
@@ -116,10 +230,85 @@ function NewCopyTradeForm() {
         {/* Whale Selection */}
         <div>
           <label className="text-xs text-muted-foreground mb-1.5 block">Whale Wallet</label>
-          <Input
-            placeholder="Enter wallet address or select from tracker"
-            className="bg-white/5 border-white/10 text-sm h-9"
-          />
+          {followedWhales.length > 0 ? (
+            <div className="space-y-1.5">
+              <select 
+                value={selectedWhaleId}
+                onChange={(e) => setSelectedWhaleId(e.target.value)}
+                className="w-full h-9 bg-white/5 border border-white/10 rounded-md px-3 text-sm text-foreground focus:border-purple-500/50 focus:outline-none"
+              >
+                <option value="" className="bg-[#12121a]">Select a followed whale...</option>
+                {followedWhales.map(whale => (
+                  <option key={whale.id} value={whale.id} className="bg-[#12121a]">
+                    {whale.label} ({shortAddress(whale.address)}) — {whale.roi >= 0 ? '+' : ''}{whale.roi}% ROI
+                  </option>
+                ))}
+              </select>
+              {followedWhales.length < whales.length && (
+                <p className="text-[10px] text-muted-foreground">
+                  Follow more whales from the <button onClick={() => useAppStore.getState().setCurrentPage('whale-tracker')} className="text-purple-400 hover:underline">Whale Tracker</button> to copy trade from them
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Input
+                placeholder="Enter wallet address or select from tracker"
+                className="bg-white/5 border-white/10 text-sm h-9"
+                value={selectedWhaleId}
+                onChange={(e) => setSelectedWhaleId(e.target.value)}
+              />
+              <p className="text-[10px] text-muted-foreground">
+                No followed whales yet. Follow whales from the <button onClick={() => useAppStore.getState().setCurrentPage('whale-tracker')} className="text-purple-400 hover:underline">Whale Tracker</button> to copy trade from them.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Token Symbol */}
+        <div>
+          <label className="text-xs text-muted-foreground mb-1.5 block">Token Symbol</label>
+          <div className="flex gap-2">
+            <Input
+              placeholder="e.g. WIF, BONK, PEPE"
+              value={tokenSymbol}
+              onChange={(e) => setTokenSymbol(e.target.value.toUpperCase())}
+              className="bg-white/5 border-white/10 text-sm h-9 flex-1"
+            />
+            <div className="flex gap-1">
+              {['buy', 'sell'].map((t) => (
+                <Button
+                  key={t}
+                  variant={tradeType === t ? 'default' : 'ghost'}
+                  size="sm"
+                  className={`h-9 text-xs px-3 ${
+                    tradeType === t
+                      ? t === 'buy' ? 'bg-green-500/20 text-green-400 border-green-500/30' : 'bg-red-500/20 text-red-400 border-red-500/30'
+                      : 'bg-white/5 text-muted-foreground'
+                  } border`}
+                  onClick={() => setTradeType(t as 'buy' | 'sell')}
+                >
+                  {t.toUpperCase()}
+                </Button>
+              ))}
+            </div>
+          </div>
+          {/* Quick select popular tokens */}
+          <div className="flex gap-1 mt-2">
+            {['WIF', 'BONK', 'PEPE', 'FLOKI', 'BOME', 'GOAT'].map(sym => (
+              <button
+                key={sym}
+                onClick={() => setTokenSymbol(sym)}
+                className={`text-[10px] px-2 py-0.5 rounded-md border transition-colors ${
+                  tokenSymbol === sym
+                    ? 'bg-purple-500/20 text-purple-400 border-purple-500/30'
+                    : 'bg-white/5 text-muted-foreground border-white/5 hover:bg-white/10'
+                }`}
+              >
+                {sym}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Copy Percentage */}
@@ -192,6 +381,18 @@ function NewCopyTradeForm() {
           </div>
         </div>
 
+        {/* Estimated Cost */}
+        <div className="p-3 rounded-lg bg-white/5 border border-white/5">
+          <div className="flex items-center justify-between text-xs mb-1">
+            <span className="text-muted-foreground">Estimated Cost</span>
+            <span className="font-medium">{(maxPosition[0] * copyPercent[0] / 100).toFixed(2)} SOL (~${(maxPosition[0] * copyPercent[0] / 100 * 142.58).toFixed(2)})</span>
+          </div>
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Your Balance</span>
+            <span className="font-medium">{walletBalance.toFixed(2)} SOL</span>
+          </div>
+        </div>
+
         {/* Warning */}
         <div className="flex items-start gap-2 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
           <AlertTriangle className="w-4 h-4 text-yellow-400 shrink-0 mt-0.5" />
@@ -202,9 +403,22 @@ function NewCopyTradeForm() {
         </div>
 
         {/* Submit */}
-        <Button className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white">
-          <Zap className="w-4 h-4 mr-2" />
-          Start Copy Trading
+        <Button 
+          className="w-full bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white"
+          onClick={handleStartCopyTrade}
+          disabled={isCreating}
+        >
+          {isCreating ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Creating Copy Trade...
+            </>
+          ) : (
+            <>
+              <Zap className="w-4 h-4 mr-2" />
+              Start Copy Trading
+            </>
+          )}
         </Button>
       </CardContent>
     </Card>
@@ -218,10 +432,11 @@ function CopyTradeStats() {
   const totalPnl = executed.reduce((sum, t) => sum + (t.pnl || 0), 0);
   const winCount = executed.filter(t => (t.pnl || 0) > 0).length;
   const winRate = executed.length > 0 ? (winCount / executed.length) * 100 : 0;
+  const activeCount = copyTrades.filter(t => t.status === 'pending').length;
 
   const stats = [
     { label: 'Total Copy Trades', value: copyTrades.length.toString(), color: 'text-purple-400', icon: Copy },
-    { label: 'Executed', value: executed.length.toString(), color: 'text-green-400', icon: Check },
+    { label: 'Active', value: activeCount.toString(), color: 'text-yellow-400', icon: Activity },
     { label: 'Win Rate', value: `${winRate.toFixed(0)}%`, color: 'text-cyan-400', icon: Percent },
     { label: 'Total P&L', value: `${totalPnl >= 0 ? '+' : ''}$${totalPnl.toFixed(2)}`, color: totalPnl >= 0 ? 'text-green-400' : 'text-red-400', icon: DollarSign },
   ];

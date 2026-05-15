@@ -14,17 +14,21 @@ import {
   Copy, Star, Eye, BarChart3, Users, DollarSign,
   Volume2, Clock, ExternalLink, Zap, Check,
   Activity, Globe, Layers, Target, Brain,
-  ShieldCheck, ShieldAlert, ShieldX, Flame,
+  ShieldCheck, ShieldAlert, ShieldX, Flame, Loader2,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
-import { generateTokenChartData, shortAddress, randomBetween } from '@/lib/mock-data';
+import { generateTokenChartData, shortAddress, randomBetween, DEX_LIST } from '@/lib/mock-data';
+import { toast } from 'sonner';
+import type { CopyTrade, AlertItem } from '@/lib/types';
 
 export function CoinDetailsView() {
-  const { tokens, selectedTokenAddress, setCurrentPage } = useAppStore();
+  const { tokens, selectedTokenAddress, setCurrentPage, addCopyTrade, addAlert, toggleWatchlist, watchlist, walletBalance, whales } = useAppStore();
   const [timeRange, setTimeRange] = useState('24h');
+  const [isQuickBuying, setIsQuickBuying] = useState(false);
+  const [isCopyTrading, setIsCopyTrading] = useState(false);
 
   const token = useMemo(() =>
     tokens.find(t => t.address === selectedTokenAddress) || tokens[0]
@@ -55,6 +59,8 @@ export function CoinDetailsView() {
     safety: randomBetween(10, 85),
   }), []);
 
+  const isInWatchlist = watchlist.includes(token?.address || '');
+
   if (!token) {
     return (
       <div className="text-center py-20 text-muted-foreground">
@@ -75,6 +81,99 @@ export function CoinDetailsView() {
   };
 
   const rugRiskInfo = getRugRiskInfo(token.rugRisk);
+
+  const handleQuickBuy = async () => {
+    setIsQuickBuying(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const pnl = randomBetween(-50, 200);
+    toast.success(`Quick buy executed!`, { 
+      description: `Bought ${token.symbol} worth 2 SOL on ${token.dex}. Estimated PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` 
+    });
+    addAlert({
+      id: `alert-${Date.now()}`,
+      type: 'whale_buy' as const,
+      title: 'Quick Buy Executed',
+      message: `Bought ${token.symbol} worth 2 SOL on ${token.dex}`,
+      token: token.symbol,
+      isRead: false,
+      channel: 'browser',
+      timestamp: new Date(),
+    });
+    setIsQuickBuying(false);
+  };
+
+  const handleCopyWhaleTrades = async () => {
+    setIsCopyTrading(true);
+    // Find a whale that traded this token
+    const relevantWhale = whales.find(w => w.recentTrades.some(t => t.tokenSymbol === token.symbol)) || whales[0];
+    
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    const newTrade: CopyTrade = {
+      id: `ct-${Date.now()}`,
+      whaleWalletId: relevantWhale.id,
+      whaleLabel: relevantWhale.label,
+      tokenSymbol: token.symbol,
+      tokenName: token.name,
+      type: 'buy',
+      amount: Number((Math.min(5, walletBalance * 0.1)).toFixed(2)),
+      copyPercent: 50,
+      status: 'pending',
+      pnl: null,
+      txHash: null,
+      createdAt: new Date(),
+    };
+    
+    addCopyTrade(newTrade);
+    toast.success('Copy trade created!', { 
+      description: `Copying ${relevantWhale.label}'s ${token.symbol} trades. Head to Copy Trading to manage.` 
+    });
+
+    // Simulate execution
+    setTimeout(() => {
+      const pnl = randomBetween(-100, 300);
+      const success = Math.random() > 0.15;
+      const { updateCopyTradeStatus, addAlert } = useAppStore.getState();
+      if (success) {
+        updateCopyTradeStatus(newTrade.id, 'executed', pnl);
+        addAlert({
+          id: `alert-${Date.now()}`,
+          type: 'copy_trade',
+          title: 'Copy Trade Executed',
+          message: `Copied ${relevantWhale.label}: Bought ${token.symbol} worth ${newTrade.amount} SOL`,
+          token: token.symbol,
+          isRead: false,
+          channel: 'browser',
+          timestamp: new Date(),
+        });
+        toast.success('Copy trade filled!', { description: `PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` });
+      } else {
+        updateCopyTradeStatus(newTrade.id, 'failed');
+        toast.error('Copy trade failed', { description: 'Could not execute. Try again from Copy Trading.' });
+      }
+    }, 3000);
+
+    setIsCopyTrading(false);
+  };
+
+  const handleToggleWatchlist = () => {
+    toggleWatchlist(token.address);
+    if (isInWatchlist) {
+      toast.info(`Removed ${token.symbol} from watchlist`);
+    } else {
+      toast.success(`Added ${token.symbol} to watchlist`, { description: 'You\'ll be notified of price changes.' });
+      addAlert({
+        id: `alert-${Date.now()}`,
+        type: 'new_token',
+        title: 'Added to Watchlist',
+        message: `${token.symbol} added to your watchlist. You'll get alerts for this token.`,
+        token: token.symbol,
+        isRead: false,
+        channel: 'browser',
+        timestamp: new Date(),
+      });
+    }
+  };
 
   return (
     <div className="space-y-4">
@@ -311,14 +410,29 @@ export function CoinDetailsView() {
 
       {/* Actions */}
       <div className="flex flex-col sm:flex-row gap-3">
-        <Button className="flex-1 bg-gradient-to-r from-purple-600 to-purple-500 text-white h-11">
-          <Zap className="w-4 h-4 mr-2" /> Quick Buy
+        <Button 
+          className="flex-1 bg-gradient-to-r from-purple-600 to-purple-500 text-white h-11"
+          onClick={handleQuickBuy}
+          disabled={isQuickBuying}
+        >
+          {isQuickBuying ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Zap className="w-4 h-4 mr-2" />}
+          {isQuickBuying ? 'Executing...' : 'Quick Buy'}
         </Button>
-        <Button className="flex-1 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white h-11">
-          <Copy className="w-4 h-4 mr-2" /> Copy Whale Trades on {token.symbol}
+        <Button 
+          className="flex-1 bg-gradient-to-r from-cyan-600 to-cyan-500 text-white h-11"
+          onClick={handleCopyWhaleTrades}
+          disabled={isCopyTrading}
+        >
+          {isCopyTrading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Copy className="w-4 h-4 mr-2" />}
+          {isCopyTrading ? 'Setting up...' : `Copy Whale Trades on ${token.symbol}`}
         </Button>
-        <Button variant="outline" className="border-white/20 h-11">
-          <Star className="w-4 h-4 mr-2" /> Add to Watchlist
+        <Button 
+          variant="outline" 
+          className={`border-white/20 h-11 ${isInWatchlist ? 'bg-yellow-500/10 text-yellow-400 border-yellow-500/30' : ''}`}
+          onClick={handleToggleWatchlist}
+        >
+          <Star className={`w-4 h-4 mr-2 ${isInWatchlist ? 'fill-yellow-400' : ''}`} />
+          {isInWatchlist ? 'In Watchlist' : 'Add to Watchlist'}
         </Button>
       </div>
     </div>

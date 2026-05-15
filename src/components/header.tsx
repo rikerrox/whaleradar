@@ -9,6 +9,7 @@ import {
   Wallet,
   ChevronDown,
   ExternalLink,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -22,13 +23,13 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { disconnectPhantomWallet } from '@/lib/wallet';
 import { toast } from 'sonner';
 
 export function Header() {
   const {
     sidebarOpen, setSidebarOpen, walletAddress, walletBalance,
     alerts, markAlertRead, searchQuery, setSearchQuery, liveTrades,
+    isDemoMode, setShowDemoGuide, setDemoGuideStep,
   } = useAppStore();
 
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
@@ -65,6 +66,13 @@ export function Header() {
             {liveTrades.length} trades
           </span>
         </div>
+
+        {/* Demo badge */}
+        {isDemoMode && (
+          <Badge variant="secondary" className="text-[10px] bg-green-500/10 text-green-400 border-green-500/30">
+            DEMO MODE
+          </Badge>
+        )}
       </div>
 
       {/* Right */}
@@ -121,6 +129,20 @@ export function Header() {
           </PopoverContent>
         </Popover>
 
+        {/* Restart Tour */}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-8 w-8"
+          onClick={() => {
+            setDemoGuideStep(0);
+            setShowDemoGuide(true);
+          }}
+          title="Restart Tour"
+        >
+          <Play className="h-4 w-4 text-purple-400" />
+        </Button>
+
         {/* Wallet */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -142,7 +164,14 @@ export function Header() {
                 </div>
                 <div>
                   <p className="text-sm font-medium font-mono">{walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}</p>
-                  <p className="text-xs text-muted-foreground">{walletBalance.toFixed(2)} SOL</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-xs text-muted-foreground">{walletBalance.toFixed(2)} SOL</p>
+                    {isDemoMode && (
+                      <Badge variant="secondary" className="text-[8px] h-3 px-1 bg-green-500/20 text-green-400 border-green-500/30">
+                        DEMO
+                      </Badge>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -153,11 +182,11 @@ export function Header() {
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               className="text-xs cursor-pointer text-red-400"
-              onClick={async () => {
-                await disconnectPhantomWallet();
+              onClick={() => {
                 useAppStore.getState().setWalletConnected(false);
                 useAppStore.getState().setWalletAddress(null);
                 useAppStore.getState().setWalletBalance(0);
+                useAppStore.getState().setDemoMode(false);
                 useAppStore.getState().setCurrentPage('landing');
                 toast.info('Wallet disconnected');
               }}

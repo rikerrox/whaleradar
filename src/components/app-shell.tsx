@@ -17,6 +17,7 @@ import { SettingsView } from '@/components/views/settings';
 import { AlertsView } from '@/components/views/alerts';
 import { WalletProfileView } from '@/components/views/wallet-profile';
 import { CoinDetailsView } from '@/components/views/coin-details';
+import { DemoWelcomeGuide } from '@/components/demo-guide';
 import { generateMockWhales, generateMockTokens, generateMockCopyTrades, generateMockAlerts, mockPortfolio } from '@/lib/mock-data';
 
 export function AppShell() {
@@ -95,70 +96,73 @@ export function AppShell() {
     }
   };
 
-  if (!showAppShell) {
-    return (
-      <AnimatePresence mode="wait">
-        <motion.div
-          key={currentPage}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.3 }}
-          className="min-h-screen"
-        >
-          {renderView()}
-        </motion.div>
-      </AnimatePresence>
-    );
-  }
-
   return (
-    <div className="min-h-screen flex bg-background">
-      {/* Sidebar - Desktop: always visible, Mobile: toggle */}
-      <div className="hidden lg:block">
-        <Sidebar />
-      </div>
+    <>
+      {/* Demo Guide Overlay */}
+      <DemoWelcomeGuide />
 
-      {/* Mobile Sidebar */}
-      <AnimatePresence>
-        {sidebarOpen && (
+      {!showAppShell ? (
+        <AnimatePresence mode="wait">
           <motion.div
-            initial={{ x: -280 }}
-            animate={{ x: 0 }}
-            exit={{ x: -280 }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed inset-y-0 left-0 z-50 lg:hidden"
+            key={currentPage}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="min-h-screen"
           >
-            <Sidebar />
+            {renderView()}
           </motion.div>
-        )}
-      </AnimatePresence>
+        </AnimatePresence>
+      ) : (
+        <div className="min-h-screen flex bg-background">
+          {/* Sidebar - Desktop: always visible, Mobile: toggle */}
+          <div className="hidden lg:block">
+            <Sidebar />
+          </div>
 
-      {/* Overlay for mobile */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/60 z-40 lg:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
-
-      {/* Main content */}
-      <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
-        <Header />
-        <main className="flex-1 overflow-y-auto p-4 lg:p-6">
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentPage}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-            >
-              {renderView()}
-            </motion.div>
+          {/* Mobile Sidebar */}
+          <AnimatePresence>
+            {sidebarOpen && (
+              <motion.div
+                initial={{ x: -280 }}
+                animate={{ x: 0 }}
+                exit={{ x: -280 }}
+                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                className="fixed inset-y-0 left-0 z-50 lg:hidden"
+              >
+                <Sidebar />
+              </motion.div>
+            )}
           </AnimatePresence>
-        </main>
-      </div>
-    </div>
+
+          {/* Overlay for mobile */}
+          {sidebarOpen && (
+            <div
+              className="fixed inset-0 bg-black/60 z-40 lg:hidden"
+              onClick={() => setSidebarOpen(false)}
+            />
+          )}
+
+          {/* Main content */}
+          <div className="flex-1 flex flex-col min-h-screen overflow-hidden">
+            <Header />
+            <main className="flex-1 overflow-y-auto p-4 lg:p-6">
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={currentPage}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {renderView()}
+                </motion.div>
+              </AnimatePresence>
+            </main>
+          </div>
+        </div>
+      )}
+    </>
   );
 }

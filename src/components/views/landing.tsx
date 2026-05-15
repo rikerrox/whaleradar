@@ -11,58 +11,57 @@ import {
   Bell, BarChart3, Eye, ArrowRight, ChevronDown,
   Activity, Coins, Target, Brain, Star, Check,
   Volume2, Lock, Users, Globe, ExternalLink, Wallet,
-  ScanSearch, Search,
+  ScanSearch, Search, Play, Sparkles,
 } from 'lucide-react';
 import { subscriptionPlans, generateMockTrades } from '@/lib/mock-data';
-import { connectPhantomWallet, isPhantomInstalled, DEMO_WALLET_ADDRESS, DEMO_WALLET_BALANCE } from '@/lib/wallet';
+import { DEMO_WALLET_ADDRESS, DEMO_WALLET_BALANCE } from '@/lib/wallet';
 import { toast } from 'sonner';
 
 const liveWhaleTrades = generateMockTrades(8);
 
 function HeroSection() {
-  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage } = useAppStore();
-  const [glowIntensity, setGlowIntensity] = useState(0);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setGlowIntensity(prev => (prev + 1) % 360);
-    }, 50);
-    return () => clearInterval(interval);
-  }, []);
-
+  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setShowDemoGuide, setDemoGuideStep } = useAppStore();
   const [isConnecting, setIsConnecting] = useState(false);
 
   const handleConnectWallet = async () => {
     setIsConnecting(true);
     try {
-      if (isPhantomInstalled()) {
-        const address = await connectPhantomWallet();
-        if (address) {
-          setWalletAddress(address);
-          setWalletConnected(true);
-          setWalletBalance(DEMO_WALLET_BALANCE);
-          toast.success('Wallet connected!', {
-            description: `Connected to ${address.slice(0, 4)}...${address.slice(-4)}`,
-          });
-          setCurrentPage('dashboard');
-        } else {
-          toast.error('Connection rejected', {
-            description: 'You rejected the wallet connection request.',
-          });
-        }
-      } else {
-        // Phantom not installed — use demo mode
-        setWalletAddress(DEMO_WALLET_ADDRESS);
-        setWalletConnected(true);
-        setWalletBalance(DEMO_WALLET_BALANCE);
-        toast.success('Demo mode activated!', {
-          description: 'Install Phantom wallet for real trading. Using demo data for now.',
-        });
-        setCurrentPage('dashboard');
-      }
+      // Always use demo mode for the sandbox
+      setWalletAddress(DEMO_WALLET_ADDRESS);
+      setWalletConnected(true);
+      setWalletBalance(DEMO_WALLET_BALANCE);
+      useAppStore.getState().setDemoMode(true);
+      setDemoGuideStep(0);
+      setShowDemoGuide(true);
+      toast.success('Demo mode activated!', {
+        description: 'Welcome to WhaleRadar AI! Take the quick tour to get started.',
+      });
+      setCurrentPage('dashboard');
     } catch {
       toast.error('Connection failed', {
-        description: 'Could not connect to wallet. Please try again.',
+        description: 'Could not connect. Please try again.',
+      });
+    } finally {
+      setIsConnecting(false);
+    }
+  };
+
+  const handleStartCopyTrading = async () => {
+    setIsConnecting(true);
+    try {
+      setWalletAddress(DEMO_WALLET_ADDRESS);
+      setWalletConnected(true);
+      setWalletBalance(DEMO_WALLET_BALANCE);
+      useAppStore.getState().setDemoMode(true);
+      setDemoGuideStep(3); // Jump to copy trading step
+      setShowDemoGuide(true);
+      toast.success('Demo mode activated!', {
+        description: 'Let\'s set up your first copy trade!',
+      });
+      setCurrentPage('copy-trading');
+    } catch {
+      toast.error('Connection failed', {
+        description: 'Could not connect. Please try again.',
       });
     } finally {
       setIsConnecting(false);
@@ -78,11 +77,24 @@ function HeroSection() {
       <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-cyan-500/10 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
 
       <div className="relative z-10 max-w-6xl mx-auto px-4 text-center">
-        {/* Badge */}
+        {/* Demo Badge */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
+          className="mb-4"
+        >
+          <Badge variant="secondary" className="px-4 py-1.5 bg-green-500/10 text-green-400 border-green-500/30 text-sm">
+            <Play className="w-3.5 h-3.5 mr-1.5" />
+            Interactive Demo — Try everything free!
+          </Badge>
+        </motion.div>
+
+        {/* Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.05 }}
           className="mb-6"
         >
           <Badge variant="secondary" className="px-4 py-1.5 bg-purple-500/10 text-purple-400 border-purple-500/30 text-sm">
@@ -131,34 +143,13 @@ function HeroSection() {
             className="h-12 px-8 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-medium neon-glow-purple transition-all duration-300"
           >
             <Wallet className="w-4 h-4 mr-2" />
-            {isConnecting ? 'Connecting...' : 'Connect Phantom Wallet'}
+            {isConnecting ? 'Connecting...' : 'Enter Demo Mode'}
           </Button>
           <Button
             size="lg"
             variant="outline"
-            onClick={async () => {
-              // Connect wallet first, then go to copy trading
-              if (isPhantomInstalled()) {
-                const address = await connectPhantomWallet();
-                if (address) {
-                  setWalletAddress(address);
-                  toast.success('Wallet connected!', {
-                    description: `Connected to ${address.slice(0, 4)}...${address.slice(-4)}`,
-                  });
-                } else {
-                  setWalletAddress(DEMO_WALLET_ADDRESS);
-                  toast.info('Using demo mode');
-                }
-              } else {
-                setWalletAddress(DEMO_WALLET_ADDRESS);
-                toast.success('Demo mode activated!', {
-                  description: 'Install Phantom wallet for real trading.',
-                });
-              }
-              setWalletConnected(true);
-              setWalletBalance(DEMO_WALLET_BALANCE);
-              setCurrentPage('copy-trading');
-            }}
+            onClick={handleStartCopyTrading}
+            disabled={isConnecting}
             className="h-12 px-8 border-white/20 hover:bg-white/10 font-medium"
           >
             Start Copy Trading
@@ -326,23 +317,17 @@ function FeaturesSection() {
 }
 
 function DashboardPreview() {
-  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage } = useAppStore();
+  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setShowDemoGuide, setDemoGuideStep } = useAppStore();
 
-  const handleConnect = async () => {
-    if (isPhantomInstalled()) {
-      const address = await connectPhantomWallet();
-      if (address) {
-        setWalletAddress(address);
-      } else {
-        setWalletAddress(DEMO_WALLET_ADDRESS);
-      }
-    } else {
-      setWalletAddress(DEMO_WALLET_ADDRESS);
-    }
+  const handleConnect = () => {
+    setWalletAddress(DEMO_WALLET_ADDRESS);
     setWalletConnected(true);
     setWalletBalance(DEMO_WALLET_BALANCE);
+    useAppStore.getState().setDemoMode(true);
+    setDemoGuideStep(1); // Start at dashboard step
+    setShowDemoGuide(true);
     toast.success('Welcome to WhaleRadar!', {
-      description: 'Your dashboard is ready.',
+      description: 'Take the quick tour to see what you can do.',
     });
     setCurrentPage('dashboard');
   };
@@ -429,8 +414,8 @@ function DashboardPreview() {
             onClick={handleConnect}
             className="bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white neon-glow-purple"
           >
-            <Eye className="w-4 h-4 mr-2" />
-            Try the Dashboard
+            <Play className="w-4 h-4 mr-2" />
+            Try the Demo
           </Button>
         </div>
       </div>
@@ -439,22 +424,16 @@ function DashboardPreview() {
 }
 
 function PricingSection() {
-  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setUserPlan } = useAppStore();
+  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setUserPlan, setShowDemoGuide, setDemoGuideStep } = useAppStore();
 
-  const handleSelectPlan = async (planId: string) => {
-    if (isPhantomInstalled()) {
-      const address = await connectPhantomWallet();
-      if (address) {
-        setWalletAddress(address);
-      } else {
-        setWalletAddress(DEMO_WALLET_ADDRESS);
-      }
-    } else {
-      setWalletAddress(DEMO_WALLET_ADDRESS);
-    }
+  const handleSelectPlan = (planId: string) => {
+    setWalletAddress(DEMO_WALLET_ADDRESS);
     setWalletConnected(true);
     setWalletBalance(DEMO_WALLET_BALANCE);
+    useAppStore.getState().setDemoMode(true);
     setUserPlan(planId as 'free' | 'pro' | 'elite');
+    setDemoGuideStep(0);
+    setShowDemoGuide(true);
     toast.success(`${planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Elite'} plan activated!`, {
       description: 'Welcome to WhaleRadar AI.',
     });
@@ -691,7 +670,17 @@ function StatsSection() {
 }
 
 function Footer() {
-  const { setWalletConnected, setWalletAddress, setCurrentPage } = useAppStore();
+  const { setWalletConnected, setWalletAddress, setCurrentPage, setWalletBalance, setShowDemoGuide, setDemoGuideStep } = useAppStore();
+
+  const handleEnterDemo = () => {
+    setWalletAddress(DEMO_WALLET_ADDRESS);
+    setWalletConnected(true);
+    setWalletBalance(DEMO_WALLET_BALANCE);
+    useAppStore.getState().setDemoMode(true);
+    setDemoGuideStep(0);
+    setShowDemoGuide(true);
+    setCurrentPage('dashboard');
+  };
 
   return (
     <footer className="py-12 px-4 border-t border-white/5">
@@ -706,14 +695,14 @@ function Footer() {
 
           <div className="flex items-center gap-6 text-sm text-muted-foreground">
             <button onClick={() => setCurrentPage('pricing')} className="hover:text-foreground transition-colors">Pricing</button>
+            <button onClick={handleEnterDemo} className="hover:text-foreground transition-colors flex items-center gap-1">
+              <Play className="w-3 h-3" /> Try Demo
+            </button>
             <a href="https://dexscreener.com" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
               DexScreener <ExternalLink className="w-3 h-3" />
             </a>
             <a href="https://bullx.io" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
               BullX <ExternalLink className="w-3 h-3" />
-            </a>
-            <a href="https://axiom.trade" target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors flex items-center gap-1">
-              Axiom <ExternalLink className="w-3 h-3" />
             </a>
           </div>
 

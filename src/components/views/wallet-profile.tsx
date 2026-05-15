@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -13,16 +13,19 @@ import {
   ArrowLeft, Wallet, Star, Copy, Eye, TrendingUp,
   TrendingDown, Shield, Clock, Users, ExternalLink,
   BarChart3, Target, Award, Zap, Check, Plus,
-  ChevronRight, Activity, Globe, Hash,
+  ChevronRight, Activity, Globe, Hash, Loader2,
 } from 'lucide-react';
 import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from 'recharts';
 import { shortAddress, generateTokenChartData, randomBetween } from '@/lib/mock-data';
+import { toast } from 'sonner';
+import type { CopyTrade, AlertItem } from '@/lib/types';
 
 export function WalletProfileView() {
-  const { whales, selectedWhaleId, setCurrentPage } = useAppStore();
+  const { whales, selectedWhaleId, setCurrentPage, toggleWhaleFollow, addCopyTrade, addAlert, walletBalance } = useAppStore();
+  const [isCopyTrading, setIsCopyTrading] = useState(false);
 
   const whale = useMemo(() => 
     whales.find(w => w.id === selectedWhaleId) || whales[0]
@@ -50,6 +53,90 @@ export function WalletProfileView() {
       </div>
     );
   }
+
+  const handleFollowToggle = () => {
+    toggleWhaleFollow(whale.id);
+    if (whale.isFollowed) {
+      toast.info(`Unfollowed ${whale.label}`, { description: 'You will no longer receive alerts for this wallet.' });
+    } else {
+      toast.success(`Now following ${whale.label}!`, { description: 'You\'ll get alerts when this whale makes moves.' });
+      addAlert({
+        id: `alert-${Date.now()}`,
+        type: 'whale_buy',
+        title: 'New Whale Followed',
+        message: `You are now following ${whale.label}. You'll be notified of their trades.`,
+        token: null,
+        isRead: false,
+        channel: 'browser',
+        timestamp: new Date(),
+      });
+    }
+  };
+
+  const handleCopyTrade = async () => {
+    setIsCopyTrading(true);
+    await new Promise(resolve => setTimeout(resolve, 2000));
+
+    // Pick a token from the whale's recent trades
+    const recentToken = whale.recentTrades[0];
+    const tokenSymbol = recentToken?.tokenSymbol || 'WIF';
+    const tokenName = recentToken?.tokenName || 'dogwifhat';
+    const tradeType = recentToken?.type || 'buy';
+
+    const newTrade: CopyTrade = {
+      id: `ct-${Date.now()}`,
+      whaleWalletId: whale.id,
+      whaleLabel: whale.label,
+      tokenSymbol,
+      tokenName,
+      type: tradeType,
+      amount: Number((Math.min(5, walletBalance * 0.1)).toFixed(2)),
+      copyPercent: 50,
+      status: 'pending',
+      pnl: null,
+      txHash: null,
+      createdAt: new Date(),
+    };
+
+    addCopyTrade(newTrade);
+    toast.success('Copy trade created!', {
+      description: `Copying ${whale.label}'s ${tokenSymbol} trades. Go to Copy Trading to manage.`,
+    });
+
+    // Simulate execution
+    setTimeout(() => {
+      const pnl = randomBetween(-100, 300);
+      const success = Math.random() > 0.15;
+      const { updateCopyTradeStatus, addAlert: addAlertFn } = useAppStore.getState();
+      if (success) {
+        updateCopyTradeStatus(newTrade.id, 'executed', pnl);
+        addAlertFn({
+          id: `alert-${Date.now()}`,
+          type: 'copy_trade',
+          title: 'Copy Trade Executed',
+          message: `Copied ${whale.label}: ${tradeType === 'buy' ? 'Bought' : 'Sold'} ${tokenSymbol} worth ${newTrade.amount} SOL`,
+          token: tokenSymbol,
+          isRead: false,
+          channel: 'browser',
+          timestamp: new Date(),
+        });
+        toast.success('Trade executed!', { description: `PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` });
+      } else {
+        updateCopyTradeStatus(newTrade.id, 'failed');
+        toast.error('Trade failed', { description: 'Could not execute. Try retrying from Copy Trading.' });
+      }
+    }, 3000);
+
+    setIsCopyTrading(false);
+  };
+
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(whale.address).then(() => {
+      toast.success('Address copied!', { description: shortAddress(whale.address) });
+    }).catch(() => {
+      toast.info('Wallet address', { description: whale.address });
+    });
+  };
 
   return (
     <div className="space-y-4">
@@ -79,7 +166,7 @@ export function WalletProfileView() {
           </div>
           <div className="flex items-center gap-2 mb-3">
             <span className="text-sm text-muted-foreground font-mono">{shortAddress(whale.address)}</span>
-            <Button variant="ghost" size="icon" className="h-6 w-6">
+            <Button variant="ghost" size="icon" className="h-6 w-6" onClick={handleCopyAddress}>
               <Copy className="w-3 h-3" />
             </Button>
             <Button variant="ghost" size="icon" className="h-6 w-6">
@@ -99,6 +186,7 @@ export function WalletProfileView() {
             variant={whale.isFollowed ? 'outline' : 'default'}
             size="sm"
             className={whale.isFollowed ? 'border-white/20' : 'bg-gradient-to-r from-purple-600 to-purple-500 text-white'}
+            onClick={handleFollowToggle}
           >
             {whale.isFollowed ? (
               <><Star className="w-3.5 h-3.5 mr-1 fill-current" /> Following</>
@@ -106,8 +194,14 @@ export function WalletProfileView() {
               <><Star className="w-3.5 h-3.5 mr-1" /> Follow</>
             )}
           </Button>
-          <Button size="sm" className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white">
-            <Copy className="w-3.5 h-3.5 mr-1" /> Copy Trade
+          <Button 
+            size="sm" 
+            className="bg-gradient-to-r from-cyan-600 to-cyan-500 text-white"
+            onClick={handleCopyTrade}
+            disabled={isCopyTrading}
+          >
+            {isCopyTrading ? <Loader2 className="w-3.5 h-3.5 mr-1 animate-spin" /> : <Copy className="w-3.5 h-3.5 mr-1" />}
+            {isCopyTrading ? 'Setting up...' : 'Copy Trade'}
           </Button>
         </div>
       </div>
@@ -217,7 +311,12 @@ export function WalletProfileView() {
           <ScrollArea className="max-h-72">
             <div className="space-y-2">
               {whale.recentTrades.map((trade) => (
-                <div key={trade.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors">
+                <div key={trade.id} className="flex items-center gap-3 p-3 rounded-lg hover:bg-white/5 transition-colors cursor-pointer"
+                  onClick={() => {
+                    useAppStore.getState().setSelectedTokenAddress(trade.tokenAddress);
+                    useAppStore.getState().setCurrentPage('coin-details');
+                  }}
+                >
                   <Badge className={`text-[10px] h-5 ${
                     trade.type === 'buy'
                       ? 'bg-green-500/20 text-green-400 border-green-500/30'
@@ -238,6 +337,7 @@ export function WalletProfileView() {
                       ${trade.totalValue.toLocaleString()}
                     </p>
                   </div>
+                  <ChevronRight className="w-4 h-4 text-muted-foreground" />
                 </div>
               ))}
             </div>

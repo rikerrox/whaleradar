@@ -14,6 +14,7 @@ import {
   Sparkles, Rocket, Award,
 } from 'lucide-react';
 import { subscriptionPlans } from '@/lib/mock-data';
+import { toast } from 'sonner';
 
 export function PricingView() {
   const { userPlan, setUserPlan, walletConnected, setWalletConnected, setWalletAddress, setCurrentPage } = useAppStore();
@@ -23,8 +24,11 @@ export function PricingView() {
     if (!walletConnected) {
       setWalletAddress('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU');
       setWalletConnected(true);
+      useAppStore.getState().setDemoMode(true);
+      useAppStore.getState().setWalletBalance(45.8);
     }
     setUserPlan(planId as 'free' | 'pro' | 'elite');
+    toast.success(`${planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Elite'} plan activated!`);
     setCurrentPage('dashboard');
   };
 

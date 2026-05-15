@@ -678,7 +678,7 @@ function WhaleDetailPanel({
 
 // ─── Main Component ──────────────────────────────────────────────
 export function WhaleTrackerView() {
-  const { whales, setCurrentPage, setSelectedWhaleId } = useAppStore();
+  const { whales, setCurrentPage, setSelectedWhaleId, toggleWhaleFollow } = useAppStore();
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -695,7 +695,7 @@ export function WhaleTrackerView() {
   // Sort state
   const [sortBy, setSortBy] = useState<'confidence' | 'roi' | 'winRate' | 'followers'>('confidence');
 
-  // Followed state (local overrides)
+  // Followed state (using store)
   const [followedIds, setFollowedIds] = useState<Set<string>>(() => {
     const set = new Set<string>();
     whales.forEach((w) => { if (w.isFollowed) set.add(w.id); });
@@ -709,6 +709,7 @@ export function WhaleTrackerView() {
   };
 
   const handleFollowToggle = (id: string) => {
+    toggleWhaleFollow(id);
     setFollowedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);

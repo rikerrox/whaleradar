@@ -1,7 +1,6 @@
 'use client';
 
 import React from 'react';
-import Link from 'next/link';
 import { useAppStore } from '@/lib/store';
 import { cn } from '@/lib/utils';
 import {
@@ -17,6 +16,7 @@ import {
   Waves,
   X,
   Zap,
+  Play,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,7 +35,7 @@ const navItems: { icon: React.ElementType; label: string; page: PageView; badge?
 ];
 
 export function Sidebar() {
-  const { currentPage, setCurrentPage, walletAddress, walletBalance, userPlan, alerts, setSidebarOpen } = useAppStore();
+  const { currentPage, setCurrentPage, walletAddress, walletBalance, userPlan, alerts, setSidebarOpen, isDemoMode, setShowDemoGuide, setDemoGuideStep } = useAppStore();
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
 
   return (
@@ -71,6 +71,11 @@ export function Sidebar() {
             <span className="text-xs text-muted-foreground font-mono">
               {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'Not Connected'}
             </span>
+            {isDemoMode && (
+              <Badge variant="secondary" className="text-[8px] h-4 px-1 bg-green-500/20 text-green-400 border-green-500/30 ml-auto">
+                DEMO
+              </Badge>
+            )}
           </div>
           <div className="flex items-baseline gap-1">
             <span className="text-lg font-bold">{walletBalance.toFixed(2)}</span>
@@ -126,9 +131,23 @@ export function Sidebar() {
 
       {/* Footer */}
       <div className="p-3 border-t border-[var(--sidebar-border)]">
+        {/* Restart Tour */}
+        <button
+          onClick={() => {
+            setDemoGuideStep(0);
+            setShowDemoGuide(true);
+          }}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-purple-400 hover:bg-purple-500/10 transition-all duration-200 mb-1"
+        >
+          <Play className="w-4 h-4" />
+          <span>Restart Tour</span>
+        </button>
         <button
           onClick={() => {
             useAppStore.getState().setWalletConnected(false);
+            useAppStore.getState().setWalletAddress(null);
+            useAppStore.getState().setWalletBalance(0);
+            useAppStore.getState().setDemoMode(false);
             useAppStore.getState().setCurrentPage('landing');
           }}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"

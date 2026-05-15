@@ -38,3 +38,38 @@ Stage Summary:
 - Recharts for portfolio, PnL, price, and volume charts
 - Framer Motion animations throughout
 - Responsive design with mobile sidebar toggle
+
+---
+Task ID: 2
+Agent: Main Orchestrator
+Task: Create interactive demo with working copy trading, wallet connection, and guided tour
+
+Work Log:
+- Enhanced Zustand store with new actions: toggleWhaleFollow, addCopyTrade, updateCopyTradeStatus, toggleWatchlist, isDemoMode, showDemoGuide, demoGuideStep
+- Fixed Copy Trading form: "Start Copy Trading" button now actually creates copy trades with whale selection, token input, buy/sell toggle, and risk management configuration
+- Copy trades now simulate execution (pending → executed/failed) with realistic timing and random PnL
+- Added cancel/retry buttons on copy trade cards that work with state updates
+- Made Quick Buy button in Coin Details work with simulated execution and toast feedback
+- Made "Copy Whale Trades" button in Coin Details create actual copy trades in the store
+- Made "Add to Watchlist" button in Coin Details toggle watchlist state with toast feedback
+- Made Follow/Unfollow button in Wallet Profile work with store's toggleWhaleFollow and toast notifications
+- Made recent trades in Wallet Profile clickable (navigates to coin details)
+- Created DemoWelcomeGuide component with 6-step guided tour covering all major features
+- Updated landing page: "Connect Phantom Wallet" changed to "Enter Demo Mode" with green badge
+- Added "Interactive Demo — Try everything free!" badge at top of hero section
+- Demo guide shows automatically when user enters demo mode for the first time
+- Added "Restart Tour" button in sidebar and header for re-viewing the guide
+- Updated header with DEMO MODE badge and Play button for restarting tour
+- Updated sidebar with DEMO badge, Restart Tour button, and proper disconnect flow
+- All follow/unfollow actions now sync across views via store
+- Added alert notifications when copy trades execute, watches are added, etc.
+- Cleaned up unused imports and ensured all code passes ESLint
+
+Stage Summary:
+- Complete interactive demo with working copy trading, quick buy, watchlist, follow/unfollow
+- 6-step guided tour that introduces all features to new users
+- Demo mode clearly indicated throughout the UI with green DEMO badges
+- All action buttons now functional with realistic simulation and toast feedback
+- Copy trades simulate execution lifecycle: pending → executed (with PnL) or failed
+- Alert system generates real-time notifications for user actions
+- Clean disconnect flow that resets all demo state
