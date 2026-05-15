@@ -1,0 +1,183 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  username      String?
+  avatar        String?
+  email         String?
+  plan          String   @default("free") // free, pro, elite
+  solBalance    Float    @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  wallets       Wallet[]
+  copyTrades    CopyTrade[]
+  alerts        Alert[]
+  subscriptions Subscription[]
+  watchlist     Watchlist[]
+}
+
+model Wallet {
+  id            String   @id @default(cuid())
+  userId        String
+  address       String   @unique
+  label         String?
+  isWhale       Boolean  @default(false)
+  whaleScore    Float    @default(0)
+  totalPnl      Float    @default(0)
+  winRate       Float    @default(0)
+  totalTrades   Int      @default(0)
+  roi           Float    @default(0)
+  isActive      Boolean  @default(true)
+  lastActive    DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+  trades        Trade[]
+  whaleProfile  WhaleWallet?
+
+  @@index([userId])
+  @@index([isWhale])
+}
+
+model WhaleWallet {
+  id             String   @id @default(cuid())
+  walletId       String   @unique
+  confidence     Float    @default(0)
+  reputation     Float    @default(0)
+  avgHoldingTime String?
+  preferredChain String   @default("solana")
+  tags           String?  // comma-separated tags
+  isBlacklisted  Boolean  @default(false)
+  followersCount Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  wallet         Wallet   @relation(fields: [walletId], references: [id])
+}
+
+model Trade {
+  id           String   @id @default(cuid())
+  walletId     String
+  tokenAddress String
+  tokenSymbol  String
+  tokenName    String
+  type         String   // buy, sell
+  amount       Float
+  price        Float
+  totalValue   Float
+  txHash       String?
+  dex          String?  // raydium, orca, jupiter, etc
+  timestamp    DateTime @default(now())
+
+  wallet       Wallet   @relation(fields: [walletId], references: [id])
+
+  @@index([walletId])
+  @@index([tokenAddress])
+  @@index([timestamp])
+}
+
+model CopyTrade {
+  id            String   @id @default(cuid())
+  userId        String
+  whaleWalletId String
+  tokenAddress  String
+  tokenSymbol   String
+  type          String   // buy, sell
+  amount        Float
+  copyPercent   Float    @default(100)
+  stopLoss      Float?
+  takeProfit    Float?
+  maxPosition   Float?
+  slippage      Float    @default(1)
+  status        String   @default("pending") // pending, executed, failed, cancelled
+  pnl           Float?
+  txHash        String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user          User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([whaleWalletId])
+}
+
+model Token {
+  id              String   @id @default(cuid())
+  address         String   @unique
+  symbol          String
+  name            String
+  image           String?
+  price           Float    @default(0)
+  priceChange24h  Float    @default(0)
+  volume24h       Float    @default(0)
+  marketCap       Float    @default(0)
+  liquidity       Float    @default(0)
+  holderCount     Int      @default(0)
+  age             String?  // "1h", "2d", "1w" etc
+  whaleCount      Int      @default(0)
+  rugRisk         Float    @default(0)
+  trustScore      Float    @default(0)
+  isTrending      Boolean  @default(false)
+  isVerified      Boolean  @default(false)
+  chain           String   @default("solana")
+  dex             String?
+  pairAddress     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Alert {
+  id        String   @id @default(cuid())
+  userId    String
+  type      String   // whale_buy, whale_sell, volume_spike, new_token, copy_trade
+  title     String
+  message   String
+  token     String?
+  isRead    Boolean  @default(false)
+  channel   String   @default("browser") // browser, telegram, discord, email
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([isRead])
+}
+
+model Subscription {
+  id              String   @id @default(cuid())
+  userId          String
+  plan            String   // free, pro, elite
+  status          String   @default("active") // active, cancelled, expired
+  startDate       DateTime @default(now())
+  endDate         DateTime?
+  stripeSessionId String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+}
+
+model Watchlist {
+  id           String   @id @default(cuid())
+  userId       String
+  tokenAddress String
+  tokenSymbol  String
+  addedAt      DateTime @default(now())
+
+  user         User     @relation(fields: [userId], references: [id])
+
+  @@unique([userId, tokenAddress])
+  @@index([userId])
+}
