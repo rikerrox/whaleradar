@@ -14,11 +14,13 @@ import {
   ScanSearch, Search,
 } from 'lucide-react';
 import { subscriptionPlans, generateMockTrades } from '@/lib/mock-data';
+import { connectPhantomWallet, isPhantomInstalled, DEMO_WALLET_ADDRESS, DEMO_WALLET_BALANCE } from '@/lib/wallet';
+import { toast } from 'sonner';
 
 const liveWhaleTrades = generateMockTrades(8);
 
 function HeroSection() {
-  const { setWalletConnected, setWalletAddress, setCurrentPage } = useAppStore();
+  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage } = useAppStore();
   const [glowIntensity, setGlowIntensity] = useState(0);
 
   useEffect(() => {
@@ -28,12 +30,43 @@ function HeroSection() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleConnectWallet = () => {
-    const mockAddr = '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU';
-    setWalletAddress(mockAddr);
-    setWalletConnected(true);
-    setWalletBalance(45.8);
-    setCurrentPage('dashboard');
+  const [isConnecting, setIsConnecting] = useState(false);
+
+  const handleConnectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      if (isPhantomInstalled()) {
+        const address = await connectPhantomWallet();
+        if (address) {
+          setWalletAddress(address);
+          setWalletConnected(true);
+          setWalletBalance(DEMO_WALLET_BALANCE);
+          toast.success('Wallet connected!', {
+            description: `Connected to ${address.slice(0, 4)}...${address.slice(-4)}`,
+          });
+          setCurrentPage('dashboard');
+        } else {
+          toast.error('Connection rejected', {
+            description: 'You rejected the wallet connection request.',
+          });
+        }
+      } else {
+        // Phantom not installed — use demo mode
+        setWalletAddress(DEMO_WALLET_ADDRESS);
+        setWalletConnected(true);
+        setWalletBalance(DEMO_WALLET_BALANCE);
+        toast.success('Demo mode activated!', {
+          description: 'Install Phantom wallet for real trading. Using demo data for now.',
+        });
+        setCurrentPage('dashboard');
+      }
+    } catch {
+      toast.error('Connection failed', {
+        description: 'Could not connect to wallet. Please try again.',
+      });
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   return (
@@ -94,18 +127,37 @@ function HeroSection() {
           <Button
             size="lg"
             onClick={handleConnectWallet}
+            disabled={isConnecting}
             className="h-12 px-8 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-medium neon-glow-purple transition-all duration-300"
           >
             <Wallet className="w-4 h-4 mr-2" />
-            Connect Phantom Wallet
+            {isConnecting ? 'Connecting...' : 'Connect Phantom Wallet'}
           </Button>
           <Button
             size="lg"
             variant="outline"
-            onClick={() => {
-              setCurrentPage('pricing');
+            onClick={async () => {
+              // Connect wallet first, then go to copy trading
+              if (isPhantomInstalled()) {
+                const address = await connectPhantomWallet();
+                if (address) {
+                  setWalletAddress(address);
+                  toast.success('Wallet connected!', {
+                    description: `Connected to ${address.slice(0, 4)}...${address.slice(-4)}`,
+                  });
+                } else {
+                  setWalletAddress(DEMO_WALLET_ADDRESS);
+                  toast.info('Using demo mode');
+                }
+              } else {
+                setWalletAddress(DEMO_WALLET_ADDRESS);
+                toast.success('Demo mode activated!', {
+                  description: 'Install Phantom wallet for real trading.',
+                });
+              }
               setWalletConnected(true);
-              setWalletAddress('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU');
+              setWalletBalance(DEMO_WALLET_BALANCE);
+              setCurrentPage('copy-trading');
             }}
             className="h-12 px-8 border-white/20 hover:bg-white/10 font-medium"
           >
@@ -274,11 +326,24 @@ function FeaturesSection() {
 }
 
 function DashboardPreview() {
-  const { setWalletConnected, setWalletAddress, setCurrentPage } = useAppStore();
+  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage } = useAppStore();
 
-  const handleConnect = () => {
-    setWalletAddress('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU');
+  const handleConnect = async () => {
+    if (isPhantomInstalled()) {
+      const address = await connectPhantomWallet();
+      if (address) {
+        setWalletAddress(address);
+      } else {
+        setWalletAddress(DEMO_WALLET_ADDRESS);
+      }
+    } else {
+      setWalletAddress(DEMO_WALLET_ADDRESS);
+    }
     setWalletConnected(true);
+    setWalletBalance(DEMO_WALLET_BALANCE);
+    toast.success('Welcome to WhaleRadar!', {
+      description: 'Your dashboard is ready.',
+    });
     setCurrentPage('dashboard');
   };
 
@@ -374,12 +439,25 @@ function DashboardPreview() {
 }
 
 function PricingSection() {
-  const { setWalletConnected, setWalletAddress, setCurrentPage, setUserPlan } = useAppStore();
+  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setUserPlan } = useAppStore();
 
-  const handleSelectPlan = (planId: string) => {
-    setWalletAddress('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU');
+  const handleSelectPlan = async (planId: string) => {
+    if (isPhantomInstalled()) {
+      const address = await connectPhantomWallet();
+      if (address) {
+        setWalletAddress(address);
+      } else {
+        setWalletAddress(DEMO_WALLET_ADDRESS);
+      }
+    } else {
+      setWalletAddress(DEMO_WALLET_ADDRESS);
+    }
     setWalletConnected(true);
+    setWalletBalance(DEMO_WALLET_BALANCE);
     setUserPlan(planId as 'free' | 'pro' | 'elite');
+    toast.success(`${planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Elite'} plan activated!`, {
+      description: 'Welcome to WhaleRadar AI.',
+    });
     setCurrentPage('dashboard');
   };
 

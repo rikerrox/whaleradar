@@ -22,6 +22,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { disconnectPhantomWallet } from '@/lib/wallet';
+import { toast } from 'sonner';
 
 export function Header() {
   const {
@@ -151,9 +153,13 @@ export function Header() {
             <DropdownMenuSeparator className="bg-white/10" />
             <DropdownMenuItem
               className="text-xs cursor-pointer text-red-400"
-              onClick={() => {
+              onClick={async () => {
+                await disconnectPhantomWallet();
                 useAppStore.getState().setWalletConnected(false);
+                useAppStore.getState().setWalletAddress(null);
+                useAppStore.getState().setWalletBalance(0);
                 useAppStore.getState().setCurrentPage('landing');
+                toast.info('Wallet disconnected');
               }}
             >
               Disconnect Wallet
