@@ -13,9 +13,9 @@ const WHALE_ADDRESSES = [
   'Jw9R1n2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sG9Q8sC',
 ];
 
-const TOKEN_SYMBOLS = ['BONK', 'WIF', 'PEPE', 'FLOKI', 'MEME', 'DOGE', 'SHIB', 'TURBO', 'BOME', 'SLERF', 'WEN', 'MYRO', 'PONKE', 'POPCAT', 'MEW', 'NEIRO', 'GOAT', 'MOODENG', 'FIGHT', 'BABYDOGE'];
-const TOKEN_NAMES = ['Bonk', 'dogwifhat', 'Pepe', 'Floki Inu', 'Memecoin', 'Dogecoin', 'Shiba Inu', 'Turbo', 'BOOK OF MEME', 'Slerf', 'Wen', 'Myro', 'Ponke', 'Popcat', 'Cat in a dogs world', 'Neiro', 'Goatseus Maximus', 'Moo Deng', 'Fight Club', 'Baby Doge'];
-const DEX_LIST = ['Raydium', 'Orca', 'Jupiter', 'Meteora', 'Phoenix'];
+export const TOKEN_SYMBOLS = ['BONK', 'WIF', 'PEPE', 'FLOKI', 'MEME', 'DOGE', 'SHIB', 'TURBO', 'BOME', 'SLERF', 'WEN', 'MYRO', 'PONKE', 'POPCAT', 'MEW', 'NEIRO', 'GOAT', 'MOODENG', 'FIGHT', 'BABYDOGE'];
+export const TOKEN_NAMES = ['Bonk', 'dogwifhat', 'Pepe', 'Floki Inu', 'Memecoin', 'Dogecoin', 'Shiba Inu', 'Turbo', 'BOOK OF MEME', 'Slerf', 'Wen', 'Myro', 'Ponke', 'Popcat', 'Cat in a dogs world', 'Neiro', 'Goatseus Maximus', 'Moo Deng', 'Fight Club', 'Baby Doge'];
+export const DEX_LIST = ['Raydium', 'Orca', 'Jupiter', 'Meteora', 'Phoenix'];
 
 function randomBetween(min: number, max: number, decimals = 2): number {
   return Number((Math.random() * (max - min) + min).toFixed(decimals));

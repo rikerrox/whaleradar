@@ -73,3 +73,24 @@ Stage Summary:
 - Copy trades simulate execution lifecycle: pending → executed (with PnL) or failed
 - Alert system generates real-time notifications for user actions
 - Clean disconnect flow that resets all demo state
+
+---
+Task ID: 3
+Agent: Main Orchestrator
+Task: Fix app 500 error and verify demo navigation flow
+
+Work Log:
+- Identified root cause of 500 error: TOKEN_SYMBOLS, TOKEN_NAMES, and DEX_LIST were not exported from mock-data.ts but were imported by copy-trading.tsx and coin-details.tsx
+- Fixed mock-data.ts: Changed `const` to `export const` for TOKEN_SYMBOLS, TOKEN_NAMES, and DEX_LIST
+- Verified all other view files have correct imports (whale-tracker, scanner, leaderboard, dashboard, wallet-profile, pricing, settings, alerts)
+- Confirmed app loads with 200 response code after fix
+- Ran ESLint - passes clean with no errors
+- Verified both services running: Next.js (port 3000) and realtime-service (port 3003)
+- Confirmed complete demo flow: Landing → Enter Demo Mode → Dashboard → Guided Tour → Navigate all views → Copy Trading → Disconnect
+
+Stage Summary:
+- Fixed critical 500 error caused by missing exports in mock-data.ts
+- All 11 views now load correctly
+- Demo mode fully functional: wallet connection, guided tour, copy trading, whale tracking, scanner, alerts
+- App serving 200 on localhost:3000
+- ESLint passes clean
