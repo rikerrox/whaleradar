@@ -37,7 +37,7 @@ export function Header() {
     isDemoMode, setShowDemoGuide, setDemoGuideStep,
     isAuthenticated, setShowAuthModal, setAuthModalTab,
     setShowDepositModal, setShowPaymentModal, setPaymentPlan,
-    logout, user,
+    logout, user, solPrice, solPriceChange24h,
   } = useAppStore();
 
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
@@ -88,8 +88,10 @@ export function Header() {
         {/* SOL Price */}
         <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
           <span className="text-xs text-muted-foreground">SOL</span>
-          <span className="text-sm font-medium">$142.58</span>
-          <span className="text-xs text-green-400">+3.2%</span>
+          <span className="text-sm font-medium">${solPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          <span className={`text-xs ${solPriceChange24h >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {solPriceChange24h >= 0 ? '+' : ''}{solPriceChange24h.toFixed(1)}%
+          </span>
         </div>
 
         {/* Alerts */}

@@ -1,0 +1,18 @@
+🚀 WhaleRadar Real-time Service running on port 3003
+   Socket.IO endpoint: /?XTransformPort=3003
+🚀 WhaleRadar Real-time Service running on port 3003
+   Socket.IO endpoint: /?XTransformPort=3003
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)
+[+] Client connected (1 total)
+[-] Client disconnected (0 total)

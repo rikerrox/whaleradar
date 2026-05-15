@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getSolPrice } from '@/lib/sol-price-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +20,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
+    // Fetch real SOL price alongside other data
+
     // Get comprehensive stats
     const [
       totalCopyTrades,
@@ -31,6 +34,7 @@ export async function GET(request: NextRequest) {
       unreadAlerts,
       watchlistCount,
       subscription,
+      solPrice,
     ] = await Promise.all([
       db.copyTrade.count({ where: { userId: user.id } }),
       db.copyTrade.count({ where: { userId: user.id, status: 'executed' } }),
@@ -63,6 +67,7 @@ export async function GET(request: NextRequest) {
         where: { userId: user.id, status: 'active' },
         orderBy: { createdAt: 'desc' },
       }),
+      getSolPrice(),
     ]);
 
     // Calculate win rate
@@ -71,7 +76,6 @@ export async function GET(request: NextRequest) {
     });
     const winRate = executedCopyTrades > 0 ? (winningTrades / executedCopyTrades) * 100 : 0;
 
-    const solPrice = 142.58;
     const totalPnl = totalPnlResult._sum.pnl || 0;
     const todayPnl = todayPnlResult._sum.pnl || 0;
     const portfolioValue = user.solBalance * solPrice + totalPnl;

@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import type { PageView, WhaleWallet, Trade, MemeToken, CopyTrade, AlertItem, PortfolioData, AppNotification } from './types';
 import { apiClient } from './api-client';
+import { calculatePortfolio, DEFAULT_SOL_BALANCE, generateMockCopyTrades } from './mock-data';
 
 interface User {
   id: string;
@@ -17,6 +18,12 @@ interface AppState {
   // Navigation
   currentPage: PageView;
   setCurrentPage: (page: PageView) => void;
+
+  // SOL Price (real-time from CoinGecko)
+  solPrice: number;
+  solPriceChange24h: number;
+  solPriceLoaded: boolean;
+  fetchSolPrice: () => Promise<void>;
 
   // Auth
   user: User | null;
@@ -69,6 +76,7 @@ interface AppState {
 
   portfolio: PortfolioData;
   setPortfolio: (data: PortfolioData) => void;
+  recalculatePortfolio: () => void;
 
   // Watchlist
   watchlist: string[]; // token addresses
@@ -119,10 +127,36 @@ interface AppState {
   setPaymentPlan: (plan: string | null) => void;
 }
 
+// Default SOL price used before API fetch completes
+const DEFAULT_SOL_PRICE = 86;
+
 export const useAppStore = create<AppState>((set, get) => ({
   // Navigation
   currentPage: 'landing',
   setCurrentPage: (page) => set({ currentPage: page }),
+
+  // SOL Price
+  solPrice: DEFAULT_SOL_PRICE,
+  solPriceChange24h: 0,
+  solPriceLoaded: false,
+  fetchSolPrice: async () => {
+    try {
+      const res = await fetch('/api/sol-price');
+      if (res.ok) {
+        const data = await res.json();
+        const newPrice = data.price;
+        const change24h = data.change24h ?? 0;
+        set({ solPrice: newPrice, solPriceChange24h: change24h, solPriceLoaded: true });
+        // Recalculate portfolio with new SOL price
+        const state = get();
+        const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+        const portfolio = calculatePortfolio(solBalance, newPrice, state.copyTrades);
+        set({ portfolio });
+      }
+    } catch {
+      // Keep fallback price
+    }
+  },
 
   // Auth
   user: null,
@@ -139,7 +173,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         return { success: false, error: result.error };
       }
       const userData = result.data as User & { stats: Record<string, unknown> };
-      const token = (result as { sessionToken?: string }).sessionToken;
+      const token = result.sessionToken;
       const isDemo = get().isDemoMode;
       set({
         user: userData,
@@ -149,6 +183,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         walletAddress: isDemo ? get().walletAddress : userData.walletAddress,
         walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: userData.plan,
+        currentPage: 'dashboard',
       });
       return { success: true };
     } catch (error) {
@@ -173,7 +208,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             return { success: false, error: regResult.error };
           }
           const userData = regResult.data as User;
-          const token = (regResult as { sessionToken?: string }).sessionToken;
+          const token = regResult.sessionToken;
           set({
             user: userData,
             isAuthenticated: true,
@@ -182,13 +217,14 @@ export const useAppStore = create<AppState>((set, get) => ({
             walletAddress: isDemo ? get().walletAddress : (userData.walletAddress || walletAddress),
             walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
             userPlan: userData.plan || 'free',
+            currentPage: 'dashboard',
           });
           return { success: true };
         }
         return { success: false, error: result.error };
       }
       const userData = result.data as User;
-      const token = (result as { sessionToken?: string }).sessionToken;
+      const token = result.sessionToken;
       set({
         user: userData,
         isAuthenticated: true,
@@ -197,6 +233,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         walletAddress: isDemo ? get().walletAddress : (userData.walletAddress || walletAddress),
         walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: userData.plan,
+        currentPage: 'dashboard',
       });
       return { success: true };
     } catch (error) {
@@ -211,7 +248,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         return { success: false, error: result.error };
       }
       const userData = result.data as User;
-      const token = (result as { sessionToken?: string }).sessionToken;
+      const token = result.sessionToken;
       const isDemo = get().isDemoMode;
       set({
         user: userData,
@@ -221,6 +258,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         walletAddress: isDemo ? get().walletAddress : (userData.walletAddress || walletAddress || null),
         walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: 'free',
+        currentPage: 'dashboard',
       });
       return { success: true };
     } catch (error) {
@@ -262,6 +300,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         walletAddress: isDemo ? get().walletAddress : userData.walletAddress,
         walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: userData.plan,
+        // Navigate to dashboard on session restore so user doesn't get stuck on landing
+        currentPage: get().currentPage === 'landing' ? 'dashboard' : get().currentPage,
       });
     } catch {
       // Session expired
@@ -291,7 +331,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Wallet
   walletConnected: false,
   walletAddress: null,
-  walletBalance: 0,
+  walletBalance: DEFAULT_SOL_BALANCE,
   isDemoMode: false,
   setWalletConnected: (connected) => set({ walletConnected: connected }),
   setWalletAddress: (address) => set({ walletAddress: address }),
@@ -320,15 +360,28 @@ export const useAppStore = create<AppState>((set, get) => ({
   setTokens: (tokens) => set({ tokens }),
 
   copyTrades: [],
-  setCopyTrades: (trades) => set({ copyTrades: trades }),
-  addCopyTrade: (trade) => set((state) => ({
-    copyTrades: [trade, ...state.copyTrades]
-  })),
-  updateCopyTradeStatus: (id, status, pnl) => set((state) => ({
-    copyTrades: state.copyTrades.map(ct =>
+  setCopyTrades: (trades) => {
+    set({ copyTrades: trades });
+    // Recalculate portfolio when copy trades change
+    const state = get();
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, trades);
+    set({ portfolio });
+  },
+  addCopyTrade: (trade) => set((state) => {
+    const newTrades = [trade, ...state.copyTrades];
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades);
+    return { copyTrades: newTrades, portfolio };
+  }),
+  updateCopyTradeStatus: (id, status, pnl) => set((state) => {
+    const newTrades = state.copyTrades.map(ct =>
       ct.id === id ? { ...ct, status, pnl: pnl !== undefined ? pnl : ct.pnl, txHash: status === 'executed' ? `${Math.random().toString(36).slice(2, 10)}...${Math.random().toString(36).slice(2, 6)}` : ct.txHash } : ct
-    )
-  })),
+    );
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades);
+    return { copyTrades: newTrades, portfolio };
+  }),
 
   alerts: [],
   setAlerts: (alerts) => set({ alerts }),
@@ -339,17 +392,14 @@ export const useAppStore = create<AppState>((set, get) => ({
     alerts: state.alerts.map(a => a.id === id ? { ...a, isRead: true } : a)
   })),
 
-  portfolio: {
-    totalValue: 0,
-    totalPnl: 0,
-    totalPnlPercent: 0,
-    solBalance: 0,
-    activePositions: 0,
-    activeCopyTrades: 0,
-    todayPnl: 0,
-    todayPnlPercent: 0,
-  },
+  portfolio: calculatePortfolio(DEFAULT_SOL_BALANCE, DEFAULT_SOL_PRICE, generateMockCopyTrades(DEFAULT_SOL_PRICE)),
   setPortfolio: (data) => set({ portfolio: data }),
+  recalculatePortfolio: () => {
+    const state = get();
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades);
+    set({ portfolio });
+  },
 
   // Watchlist
   watchlist: [],

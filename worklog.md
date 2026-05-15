@@ -116,3 +116,82 @@ Stage Summary:
 - Demo mode state (wallet address, balance) is preserved through API responses
 - Register API returns correct user data with wallet address
 - Demo mode flow: Click "Enter Demo Mode" → dashboard loads immediately → API auth happens in background
+
+---
+Task ID: comprehensive-fix
+Agent: Main
+Task: Fix all portfolio calculations, trade numbers, and positions - comprehensive overhaul
+
+Work Log:
+- Found root cause: mock-data.ts had been reverted with hardcoded mockPortfolio.totalValue = 48750.30 ($48K!)
+- Only 10 whale addresses instead of 30
+- Only 5 copy trades instead of 7+
+- No calculatePortfolio/calculatePositions functions
+- No REAL_TOKEN_PRICES
+- generatePortfolioChartData started at $40,000
+- fetchSolPrice was defined but never called, and /api/sol-price endpoint didn't exist
+- Backend API routes used hardcoded solPrice = 142.58
+
+Fixes Applied:
+1. Completely rewrote mock-data.ts with:
+   - 30 whale addresses
+   - REAL_TOKEN_PRICES with realistic token prices
+   - calculatePositions() with 12 positions based on real token prices
+   - calculatePortfolio() with deterministic (not random) calculations
+   - 8 copy trades (6 executed, 1 pending, 1 failed = 7 active)
+   - generatePortfolioChartData(currentValue) that scales properly
+   - Removed hardcoded $48,750 mockPortfolio
+
+2. Created /api/sol-price/route.ts - fetches real SOL price from CoinGecko with 5min cache
+3. Created /lib/sol-price-server.ts - shared server-side SOL price helper
+4. Updated /api/wallet/balance/route.ts - uses getSolPrice() instead of hardcoded 142.58
+5. Updated /api/user/stats/route.ts - uses getSolPrice() instead of hardcoded 142.58
+6. Updated store.ts with:
+   - solPrice, solPriceChange24h, solPriceLoaded state
+   - fetchSolPrice() that calls /api/sol-price and recalculates portfolio
+   - recalculatePortfolio() function
+   - Portfolio auto-recalculates when copyTrades change or SOL price updates
+7. Updated app-shell.tsx to:
+   - Call fetchSolPrice() on mount
+   - Refresh SOL price every 5 minutes
+8. Updated dashboard.tsx to:
+   - Use useMemo for chart data based on portfolio.totalValue
+   - Show all active copy trades (not just 4)
+   - Dynamic profitable count and pending count
+
+Verified Math (SOL at $130):
+- 51 SOL balance, 47.5 SOL invested in 12 positions
+- 3.5 remaining SOL = $455
+- Total position value = $5,275.61
+- Total portfolio = $5,730.61 (down from $48,750!)
+- Total PnL = $1,239.05
+- Active Positions = 12
+- Active Copy Trades = 7
+
+Stage Summary:
+- Portfolio value now shows realistic ~$5,730 instead of $48,750
+- 30 whales tracked instead of 10
+- 7 active copy trades shown instead of 4
+- Real-time SOL price from CoinGecko with fallback
+- All calculations consistent and deterministic
+- Backend API routes use real SOL prices
+
+---
+Task ID: sol-price-fix
+Agent: Main
+Task: Fix wrong SOL price displayed in header
+
+Work Log:
+- Found header.tsx line 91 had hardcoded "$142.58" SOL price with fake "+3.2%" change
+- CoinGecko API returns real SOL price of ~$86, not $142 or $130
+- Updated header.tsx to use solPrice and solPriceChange24h from store (real-time)
+- Updated REAL_TOKEN_PRICES SOL from 130 to 86
+- Updated store DEFAULT_SOL_PRICE from 130 to 86
+- Updated /api/sol-price fallback from 130 to 86
+- Updated sol-price-server.ts fallback from 130 to 86
+- Price now shows green/red based on actual 24h change direction
+
+Stage Summary:
+- SOL price in header now shows real-time value (~$85.89) from CoinGecko
+- All fallback values updated to ~$86 (realistic current price)
+- 24h change shows with correct color (green for positive, red for negative)

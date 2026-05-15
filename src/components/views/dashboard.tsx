@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useAppStore } from '@/lib/store';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,12 +19,12 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
-import { generatePortfolioChartData, generateTokenChartData, shortAddress } from '@/lib/mock-data';
+import { generatePortfolioChartData, generateTokenChartData, shortAddress, calculatePositions } from '@/lib/mock-data';
 import type { Trade } from '@/lib/types';
 
 function PortfolioCard() {
   const { portfolio } = useAppStore();
-  const chartData = generatePortfolioChartData();
+  const chartData = useMemo(() => generatePortfolioChartData(portfolio.totalValue), [portfolio.totalValue]);
 
   return (
     <Card className="glass-card neon-glow-purple col-span-full lg:col-span-2">

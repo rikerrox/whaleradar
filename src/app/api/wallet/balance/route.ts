@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
+import { getSolPrice } from '@/lib/sol-price-server';
 
 export async function GET(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Calculate portfolio stats
-    const [activeCopyTrades, totalPnl] = await Promise.all([
+    const [activeCopyTrades, totalPnl, solPrice] = await Promise.all([
       db.copyTrade.count({
         where: { userId: user.id, status: { in: ['pending', 'executed'] } },
       }),
@@ -39,9 +40,9 @@ export async function GET(request: NextRequest) {
         where: { userId: user.id, status: 'executed', pnl: { not: null } },
         _sum: { pnl: true },
       }),
+      getSolPrice(),
     ]);
 
-    const solPrice = 142.58; // Simulated SOL price
     const portfolioValue = user.solBalance * solPrice + (totalPnl._sum.pnl || 0);
 
     return NextResponse.json({

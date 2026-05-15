@@ -1,5 +1,6 @@
 import type { WhaleWallet, Trade, MemeToken, CopyTrade, AlertItem, PortfolioData, SubscriptionPlan, ChartDataPoint } from './types';
 
+// ─── 30 Whale Addresses ────────────────────────────────────────────
 const WHALE_ADDRESSES = [
   '7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU',
   'DRpbCBMxVnDK7maPM5tGv6MvB3v1sRMC86PZ8okm21hy',
@@ -11,11 +12,211 @@ const WHALE_ADDRESSES = [
   '8vBN4n2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sG9Q8sB',
   'Ck7M2p3F6q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sG3',
   'Jw9R1n2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sG9Q8sC',
+  '4pLk8m3R6q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sD',
+  'Xm2T5n7K9q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sE',
+  'Rb6W1p4F8q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sF',
+  'Nv3Y7m2K5q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sG',
+  'Qf8P4n1R6q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sH',
+  'Zt2L9p3M7q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sI',
+  'Wk5X8n2P4q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sJ',
+  'Yc7R1m4T9q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sK',
+  'Ab3V6p2N8q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sL',
+  'Ed9Q4m1R7q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sM',
+  'Gh2W5n3P8q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sN',
+  'Ik6Y1p4M9q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sO',
+  'Jm8R2m5N3q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sP',
+  'Ln4T7p1Q6q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sQ',
+  'Op9V3m2R8q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sR',
+  'Sq1W6n4P5q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sS',
+  'Tu3X8p1M7q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sT',
+  'Vw5Y2m4N9q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sU',
+  'Xy7Z1p3Q6q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sV',
+  'Ba9R4m2P8q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sW',
 ];
 
 export const TOKEN_SYMBOLS = ['BONK', 'WIF', 'PEPE', 'FLOKI', 'MEME', 'DOGE', 'SHIB', 'TURBO', 'BOME', 'SLERF', 'WEN', 'MYRO', 'PONKE', 'POPCAT', 'MEW', 'NEIRO', 'GOAT', 'MOODENG', 'FIGHT', 'BABYDOGE'];
 export const TOKEN_NAMES = ['Bonk', 'dogwifhat', 'Pepe', 'Floki Inu', 'Memecoin', 'Dogecoin', 'Shiba Inu', 'Turbo', 'BOOK OF MEME', 'Slerf', 'Wen', 'Myro', 'Ponke', 'Popcat', 'Cat in a dogs world', 'Neiro', 'Goatseus Maximus', 'Moo Deng', 'Fight Club', 'Baby Doge'];
 export const DEX_LIST = ['Raydium', 'Orca', 'Jupiter', 'Meteora', 'Phoenix'];
+
+// ─── Default SOL balance for the demo portfolio ─────────────────
+export const DEFAULT_SOL_BALANCE = 51;
+
+// ─── Realistic token prices (updated March 2025) ─────
+export const REAL_TOKEN_PRICES: Record<string, { price: number; change24h: number }> = {
+  'SOL':    { price: 86,    change24h: -0.4 },
+  'WIF':    { price: 0.45,  change24h: 3.5 },
+  'BONK':   { price: 0.0000061, change24h: 2.6 },
+  'PEPE':   { price: 0.00000364, change24h: 0.8 },
+  'FLOKI':  { price: 0.00002998, change24h: 3.6 },
+  'MEME':   { price: 0.001, change24h: 1.2 },
+  'DOGE':   { price: 0.103, change24h: 1.5 },
+  'SHIB':   { price: 0.00000567, change24h: -0.01 },
+  'TURBO':  { price: 0.001, change24h: -3.1 },
+  'BOME':   { price: 0.000547, change24h: -2.1 },
+  'SLERF':  { price: 0.015, change24h: 7.8 },
+  'WEN':    { price: 0.00004, change24h: -1.5 },
+  'MYRO':   { price: 0.005, change24h: 4.2 },
+  'PONKE':  { price: 0.02,  change24h: -5.1 },
+  'POPCAT': { price: 0.15,  change24h: 12.3 },
+  'MEW':    { price: 0.001, change24h: -2.7 },
+  'NEIRO':  { price: 0.0000976, change24h: 4.5 },
+  'GOAT':   { price: 0.01739, change24h: 1.7 },
+  'MOODENG':{ price: 0.005, change24h: 15.2 },
+  'FIGHT':  { price: 0.0005, change24h: -6.8 },
+  'BABYDOGE':{ price: 0.000000001, change24h: 3.1 },
+  'JUP':    { price: 0.40,  change24h: 2.3 },
+  'RNDR':   { price: 1.90,  change24h: -1.8 },
+};
+
+// ─── Active position definitions ───────────────────────────────
+export interface ActivePosition {
+  symbol: string;
+  name: string;
+  solInvested: number;
+  tokenAmount: number;
+  entryPrice: number;
+  currentPrice: number;
+  currentValue: number;
+  pnl: number;
+  pnlPercent: number;
+  allocation: number;
+}
+
+export function calculatePositions(solPrice: number): ActivePosition[] {
+  // SOL price at entry was ~$85 (slightly lower than current)
+  const solPriceAtEntry = 85;
+
+  const positions: ActivePosition[] = [
+    {
+      symbol: 'WIF',
+      name: 'dogwifhat',
+      solInvested: 8.5,
+      tokenAmount: Math.floor((8.5 * solPriceAtEntry) / 0.32),
+      entryPrice: 0.32,
+      currentPrice: REAL_TOKEN_PRICES['WIF'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'BONK',
+      name: 'Bonk',
+      solInvested: 5.2,
+      tokenAmount: Math.floor((5.2 * solPriceAtEntry) / 0.0000045),
+      entryPrice: 0.0000045,
+      currentPrice: REAL_TOKEN_PRICES['BONK'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'PEPE',
+      name: 'Pepe',
+      solInvested: 6.0,
+      tokenAmount: Math.floor((6.0 * solPriceAtEntry) / 0.0000028),
+      entryPrice: 0.0000028,
+      currentPrice: REAL_TOKEN_PRICES['PEPE'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'GOAT',
+      name: 'Goatseus Maximus',
+      solInvested: 4.5,
+      tokenAmount: Math.floor((4.5 * solPriceAtEntry) / 0.013),
+      entryPrice: 0.013,
+      currentPrice: REAL_TOKEN_PRICES['GOAT'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'BOME',
+      name: 'BOOK OF MEME',
+      solInvested: 3.8,
+      tokenAmount: Math.floor((3.8 * solPriceAtEntry) / 0.00045),
+      entryPrice: 0.00045,
+      currentPrice: REAL_TOKEN_PRICES['BOME'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'FLOKI',
+      name: 'Floki Inu',
+      solInvested: 2.5,
+      tokenAmount: Math.floor((2.5 * solPriceAtEntry) / 0.000025),
+      entryPrice: 0.000025,
+      currentPrice: REAL_TOKEN_PRICES['FLOKI'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'POPCAT',
+      name: 'Popcat',
+      solInvested: 3.2,
+      tokenAmount: Math.floor((3.2 * solPriceAtEntry) / 0.12),
+      entryPrice: 0.12,
+      currentPrice: REAL_TOKEN_PRICES['POPCAT'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'JUP',
+      name: 'Jupiter',
+      solInvested: 4.0,
+      tokenAmount: Math.floor((4.0 * solPriceAtEntry) / 0.30),
+      entryPrice: 0.30,
+      currentPrice: REAL_TOKEN_PRICES['JUP'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'RNDR',
+      name: 'Render',
+      solInvested: 3.5,
+      tokenAmount: Math.floor((3.5 * solPriceAtEntry) / 1.50),
+      entryPrice: 1.50,
+      currentPrice: REAL_TOKEN_PRICES['RNDR'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'TURBO',
+      name: 'Turbo',
+      solInvested: 2.0,
+      tokenAmount: Math.floor((2.0 * solPriceAtEntry) / 0.0008),
+      entryPrice: 0.0008,
+      currentPrice: REAL_TOKEN_PRICES['TURBO'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'SLERF',
+      name: 'Slerf',
+      solInvested: 2.8,
+      tokenAmount: Math.floor((2.8 * solPriceAtEntry) / 0.012),
+      entryPrice: 0.012,
+      currentPrice: REAL_TOKEN_PRICES['SLERF'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+    {
+      symbol: 'MYRO',
+      name: 'Myro',
+      solInvested: 1.5,
+      tokenAmount: Math.floor((1.5 * solPriceAtEntry) / 0.004),
+      entryPrice: 0.004,
+      currentPrice: REAL_TOKEN_PRICES['MYRO'].price,
+      currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+    },
+  ];
+
+  // Total SOL invested across all positions
+  const totalSolInvested = positions.reduce((sum, p) => sum + p.solInvested, 0);
+
+  // Remaining SOL after investments
+  const remainingSol = DEFAULT_SOL_BALANCE - totalSolInvested;
+
+  // Total portfolio value = remaining SOL value + sum of all token values
+  const totalPortfolio = (remainingSol * solPrice) + positions.reduce((sum, p) => sum + (p.tokenAmount * p.currentPrice), 0);
+
+  // Calculate values for each position
+  for (const pos of positions) {
+    pos.currentValue = Number((pos.tokenAmount * pos.currentPrice).toFixed(2));
+    const entryValue = pos.tokenAmount * pos.entryPrice;
+    pos.pnl = Number((pos.currentValue - entryValue).toFixed(2));
+    pos.pnlPercent = entryValue > 0 ? Number(((pos.currentValue / entryValue - 1) * 100).toFixed(1)) : 0;
+    pos.allocation = totalPortfolio > 0 ? Number(((pos.currentValue / totalPortfolio) * 100).toFixed(1)) : 0;
+  }
+
+  return positions;
+}
 
 function randomBetween(min: number, max: number, decimals = 2): number {
   return Number((Math.random() * (max - min) + min).toFixed(decimals));
@@ -33,11 +234,17 @@ function hoursAgo(h: number): Date {
   return new Date(Date.now() - h * 60 * 60 * 1000);
 }
 
+// ─── 30 Whales ─────────────────────────────────────────────────────
 export function generateMockWhales(): WhaleWallet[] {
   const labels = [
     'Smart Whale Alpha', 'Degen Master', 'Sol Sniper', 'Meme King',
     'Whale Shark', 'Diamond Hands', 'APE Lord', 'Fast Fingers',
-    'Crypto Sage', 'Whisper Trader'
+    'Crypto Sage', 'Whisper Trader', 'Solana Whale 11', 'Token Hunter',
+    'Block Explorer', 'Moon Shot', 'Deep Diver', 'Alpha Seeker',
+    'Trade Bot Pro', 'Whale Watcher', 'Sol Surfer', 'Meme Lord 420',
+    'Profit Pilot', 'Chain Chaser', 'Signal Master', 'Crypto Phoenix',
+    'Rug Pull Detective', 'Yield Farmer', 'Vault Keeper', 'Night Trader',
+    'Flash Bolt', 'Quant Whale'
   ];
   const tagSets = [
     ['early-buyer', 'memecoin-whale'],
@@ -50,12 +257,32 @@ export function generateMockWhales(): WhaleWallet[] {
     ['scalper', 'fast-exits'],
     ['smart-money', 'analytical'],
     ['insider', 'early-buyer'],
+    ['whale', 'memecoin-whale'],
+    ['sniper', 'early-buyer'],
+    ['smart-money', 'analytical'],
+    ['degen', 'high-frequency'],
+    ['whale', 'diamond-hands'],
+    ['early-buyer', 'smart-money'],
+    ['scalper', 'high-frequency'],
+    ['analytical', 'low-risk'],
+    ['memecoin-whale', 'ape'],
+    ['degen', 'fast-exits'],
+    ['smart-money', 'long-term'],
+    ['sniper', 'high-volume'],
+    ['diamond-hands', 'whale'],
+    ['insider', 'memecoin-whale'],
+    ['analytical', 'early-buyer'],
+    ['ape', 'new-launches'],
+    ['whale', 'low-risk'],
+    ['high-frequency', 'fast-exits'],
+    ['sniper', 'degen'],
+    ['smart-money', 'high-volume'],
   ];
 
   return WHALE_ADDRESSES.map((addr, i) => ({
     id: `whale-${i + 1}`,
     address: addr,
-    label: labels[i],
+    label: labels[i] || `Whale ${i + 1}`,
     confidence: randomBetween(60, 99),
     reputation: randomBetween(70, 98),
     roi: randomBetween(-20, 450),
@@ -63,31 +290,34 @@ export function generateMockWhales(): WhaleWallet[] {
     totalTrades: Math.floor(randomBetween(50, 2500, 0)),
     totalPnl: randomBetween(-50, 5000),
     avgHoldingTime: randomFromArray(['2h', '6h', '12h', '1d', '3d', '1w']),
-    tags: tagSets[i],
+    tags: tagSets[i] || ['whale', 'smart-money'],
     followersCount: Math.floor(randomBetween(10, 5000, 0)),
-    recentTrades: generateMockTrades(5, addr, labels[i]),
+    recentTrades: generateMockTrades(5, addr, labels[i] || `Whale ${i + 1}`),
     isFollowed: i < 3,
   }));
 }
 
 export function generateMockTrades(count: number, walletAddress?: string, walletLabel?: string): Trade[] {
   const trades: Trade[] = [];
+  const solPrice = REAL_TOKEN_PRICES['SOL'].price;
   for (let i = 0; i < count; i++) {
     const tokenIdx = Math.floor(Math.random() * TOKEN_SYMBOLS.length);
     const isBuy = Math.random() > 0.35;
-    const amount = randomBetween(100, 50000);
-    const price = randomBetween(0.0000001, 0.5, 10);
+    const symbol = TOKEN_SYMBOLS[tokenIdx];
+    const tokenPrice = REAL_TOKEN_PRICES[symbol]?.price || randomBetween(0.0001, 0.5, 10);
+    const solValue = randomBetween(5, 200);
+    const amount = Number((solValue / tokenPrice).toFixed(0));
     trades.push({
       id: `trade-${Date.now()}-${i}-${Math.random().toString(36).slice(2, 8)}`,
       walletAddress: walletAddress || randomFromArray(WHALE_ADDRESSES),
       walletLabel: walletLabel || undefined,
-      tokenAddress: `token-${TOKEN_SYMBOLS[tokenIdx].toLowerCase()}`,
-      tokenSymbol: TOKEN_SYMBOLS[tokenIdx],
+      tokenAddress: `token-${symbol.toLowerCase()}`,
+      tokenSymbol: symbol,
       tokenName: TOKEN_NAMES[tokenIdx],
       type: isBuy ? 'buy' : 'sell',
       amount,
-      price,
-      totalValue: Number((amount * price).toFixed(2)),
+      price: tokenPrice,
+      totalValue: Number((solValue * solPrice).toFixed(2)),
       txHash: `${Math.random().toString(36).slice(2, 10)}...${Math.random().toString(36).slice(2, 6)}`,
       dex: randomFromArray(DEX_LIST),
       timestamp: hoursAgo(Math.random() * 48),
@@ -98,8 +328,9 @@ export function generateMockTrades(count: number, walletAddress?: string, wallet
 
 export function generateMockTokens(): MemeToken[] {
   return TOKEN_SYMBOLS.map((symbol, i) => {
-    const price = randomBetween(0.0000001, 0.5, 10);
-    const marketCap = randomBetween(100000, 500000000);
+    const priceInfo = REAL_TOKEN_PRICES[symbol] || { price: randomBetween(0.0001, 0.5, 10), change24h: randomBetween(-20, 50) };
+    const price = priceInfo.price;
+    const marketCap = price > 0.01 ? randomBetween(50000000, 500000000) : randomBetween(500000, 50000000);
     const liquidity = marketCap * randomBetween(0.05, 0.3);
     return {
       id: `token-${i + 1}`,
@@ -108,7 +339,7 @@ export function generateMockTokens(): MemeToken[] {
       name: TOKEN_NAMES[i],
       image: '',
       price,
-      priceChange24h: randomBetween(-80, 300),
+      priceChange24h: priceInfo.change24h,
       volume24h: randomBetween(50000, 50000000),
       marketCap,
       liquidity,
@@ -126,7 +357,8 @@ export function generateMockTokens(): MemeToken[] {
   });
 }
 
-export function generateMockCopyTrades(): CopyTrade[] {
+export function generateMockCopyTrades(solPrice: number = 130): CopyTrade[] {
+  const solAtEntry = 85;
   return [
     {
       id: 'ct-1',
@@ -135,10 +367,10 @@ export function generateMockCopyTrades(): CopyTrade[] {
       tokenSymbol: 'WIF',
       tokenName: 'dogwifhat',
       type: 'buy',
-      amount: 2.5,
+      amount: 8.5,
       copyPercent: 50,
       status: 'executed',
-      pnl: 125.40,
+      pnl: Number(((8.5 * solAtEntry / 0.32) * REAL_TOKEN_PRICES['WIF'].price - 8.5 * solAtEntry).toFixed(2)),
       txHash: '5Kj7h...mN2p',
       createdAt: hoursAgo(2),
     },
@@ -149,10 +381,10 @@ export function generateMockCopyTrades(): CopyTrade[] {
       tokenSymbol: 'BONK',
       tokenName: 'Bonk',
       type: 'buy',
-      amount: 1.8,
+      amount: 5.2,
       copyPercent: 25,
       status: 'executed',
-      pnl: -32.10,
+      pnl: Number(((5.2 * solAtEntry / 0.0000045) * REAL_TOKEN_PRICES['BONK'].price - 5.2 * solAtEntry).toFixed(2)),
       txHash: '8Qm3k...pL5v',
       createdAt: hoursAgo(5),
     },
@@ -163,7 +395,7 @@ export function generateMockCopyTrades(): CopyTrade[] {
       tokenSymbol: 'PEPE',
       tokenName: 'Pepe',
       type: 'buy',
-      amount: 5.0,
+      amount: 6.0,
       copyPercent: 100,
       status: 'pending',
       pnl: null,
@@ -174,13 +406,13 @@ export function generateMockCopyTrades(): CopyTrade[] {
       id: 'ct-4',
       whaleWalletId: 'whale-4',
       whaleLabel: 'Meme King',
-      tokenSymbol: 'FLOKI',
-      tokenName: 'Floki Inu',
+      tokenSymbol: 'GOAT',
+      tokenName: 'Goatseus Maximus',
       type: 'sell',
-      amount: 3.2,
+      amount: 4.5,
       copyPercent: 75,
       status: 'executed',
-      pnl: 89.70,
+      pnl: Number(((4.5 * solAtEntry / 0.013) * REAL_TOKEN_PRICES['GOAT'].price - 4.5 * solAtEntry).toFixed(2)),
       txHash: '2Nf8j...kR9w',
       createdAt: hoursAgo(8),
     },
@@ -191,23 +423,65 @@ export function generateMockCopyTrades(): CopyTrade[] {
       tokenSymbol: 'BOME',
       tokenName: 'BOOK OF MEME',
       type: 'buy',
-      amount: 4.1,
+      amount: 3.8,
       copyPercent: 100,
       status: 'failed',
       pnl: null,
       txHash: null,
       createdAt: hoursAgo(1),
     },
+    {
+      id: 'ct-6',
+      whaleWalletId: 'whale-1',
+      whaleLabel: 'Smart Whale Alpha',
+      tokenSymbol: 'JUP',
+      tokenName: 'Jupiter',
+      type: 'buy',
+      amount: 4.0,
+      copyPercent: 50,
+      status: 'executed',
+      pnl: Number(((4.0 * solAtEntry / 0.30) * REAL_TOKEN_PRICES['JUP'].price - 4.0 * solAtEntry).toFixed(2)),
+      txHash: '3Pk9m...qW4x',
+      createdAt: hoursAgo(12),
+    },
+    {
+      id: 'ct-7',
+      whaleWalletId: 'whale-2',
+      whaleLabel: 'Degen Master',
+      tokenSymbol: 'RNDR',
+      tokenName: 'Render',
+      type: 'buy',
+      amount: 3.5,
+      copyPercent: 75,
+      status: 'executed',
+      pnl: Number(((3.5 * solAtEntry / 1.50) * REAL_TOKEN_PRICES['RNDR'].price - 3.5 * solAtEntry).toFixed(2)),
+      txHash: '7Lm2n...rT8y',
+      createdAt: hoursAgo(18),
+    },
+    {
+      id: 'ct-8',
+      whaleWalletId: 'whale-3',
+      whaleLabel: 'Sol Sniper',
+      tokenSymbol: 'TURBO',
+      tokenName: 'Turbo',
+      type: 'buy',
+      amount: 2.0,
+      copyPercent: 100,
+      status: 'executed',
+      pnl: Number(((2.0 * solAtEntry / 0.0008) * REAL_TOKEN_PRICES['TURBO'].price - 2.0 * solAtEntry).toFixed(2)),
+      txHash: '4Hn6p...sU2v',
+      createdAt: hoursAgo(24),
+    },
   ];
 }
 
-export function generateMockAlerts(): AlertItem[] {
+export function generateMockAlerts(solPrice: number = 130): AlertItem[] {
   return [
     {
       id: 'alert-1',
       type: 'whale_buy',
       title: 'Whale Buy Detected',
-      message: 'Smart Whale Alpha bought 50,000 WIF worth $12,500',
+      message: `Smart Whale Alpha bought 8.5 SOL of WIF (~$${(8.5 * solPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })})`,
       token: 'WIF',
       isRead: false,
       channel: 'browser',
@@ -227,7 +501,7 @@ export function generateMockAlerts(): AlertItem[] {
       id: 'alert-3',
       type: 'copy_trade',
       title: 'Copy Trade Executed',
-      message: 'Copied Sol Sniper: Bought PEPE worth 5 SOL',
+      message: `Copied Sol Sniper: Bought PEPE worth 6 SOL (~$${(6 * solPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })})`,
       token: 'PEPE',
       isRead: true,
       channel: 'browser',
@@ -247,8 +521,8 @@ export function generateMockAlerts(): AlertItem[] {
       id: 'alert-5',
       type: 'whale_sell',
       title: 'Large Sell-off Detected',
-      message: 'Degen Master sold 100,000 FLOKI worth $8,200',
-      token: 'FLOKI',
+      message: `Degen Master sold 5.2 SOL of BONK (~$${(5.2 * solPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })})`,
+      token: 'BONK',
       isRead: true,
       channel: 'browser',
       timestamp: hoursAgo(3),
@@ -256,16 +530,81 @@ export function generateMockAlerts(): AlertItem[] {
   ];
 }
 
-export const mockPortfolio: PortfolioData = {
-  totalValue: 48750.30,
-  totalPnl: 8342.50,
-  totalPnlPercent: 20.65,
-  solBalance: 45.8,
-  activePositions: 7,
-  activeCopyTrades: 3,
-  todayPnl: 1250.80,
-  todayPnlPercent: 2.64,
-};
+// ─── Dynamic portfolio calculation from real data ────────────────
+// IMPORTANT: Does NOT double-count. SOL invested in positions is subtracted from balance.
+export function calculatePortfolio(solBalance: number, solPrice: number, copyTrades: CopyTrade[]): PortfolioData {
+  const positions = calculatePositions(solPrice);
+
+  // Total SOL invested across all positions
+  const totalSolInvested = positions.reduce((sum, p) => sum + p.solInvested, 0);
+
+  // Remaining SOL (not invested in positions)
+  const remainingSol = Math.max(solBalance - totalSolInvested, 0);
+
+  // SOL value in USD (only the remaining, non-invested SOL)
+  const remainingSolValueUsd = remainingSol * solPrice;
+
+  // Sum of position current values (these are already in USD)
+  const positionsValue = positions.reduce((sum, p) => sum + p.currentValue, 0);
+
+  // Total PnL from positions (current value vs entry value)
+  const totalPositionPnl = positions.reduce((sum, p) => sum + p.pnl, 0);
+
+  // Total portfolio = remaining SOL value + token values (no double counting)
+  const totalValue = Number((remainingSolValueUsd + positionsValue).toFixed(2));
+
+  // Total PnL from positions
+  const totalPnl = Number(totalPositionPnl.toFixed(2));
+  const totalPnlPercent = totalValue > 0 ? Number(((totalPnl / (totalValue - totalPnl)) * 100).toFixed(2)) : 0;
+
+  // Today's PnL (deterministic: ~2.1% based on weighted average of 24h changes)
+  const todayPnlPercent = 2.1;
+  const todayPnl = Number((totalValue * todayPnlPercent / 100).toFixed(2));
+
+  const activePositions = positions.length;
+  const activeCopyTrades = copyTrades.filter(ct => ct.status === 'pending' || ct.status === 'executed').length;
+
+  return {
+    totalValue,
+    totalPnl,
+    totalPnlPercent,
+    solBalance,
+    activePositions,
+    activeCopyTrades,
+    todayPnl,
+    todayPnlPercent,
+  };
+}
+
+// ─── Dynamic portfolio chart data ──────────────────────────────
+export function generatePortfolioChartData(currentValue: number): ChartDataPoint[] {
+  const data: ChartDataPoint[] = [];
+  let value = currentValue * 0.85; // Start 15% lower for a growth story
+  for (let i = 30; i >= 0; i--) {
+    value += randomBetween(-currentValue * 0.015, currentValue * 0.02);
+    value = Math.max(value, currentValue * 0.6);
+    data.push({
+      time: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      value: Number(value.toFixed(2)),
+    });
+  }
+  return data;
+}
+
+export function generateTokenChartData(): ChartDataPoint[] {
+  const data: ChartDataPoint[] = [];
+  let value = 0.001;
+  for (let i = 24; i >= 0; i--) {
+    value *= (1 + randomBetween(-0.1, 0.12));
+    value = Math.max(value, 0.0001);
+    data.push({
+      time: `${24 - i}:00`,
+      value: Number(value.toFixed(8)),
+      volume: Number(randomBetween(10000, 500000).toFixed(0)),
+    });
+  }
+  return data;
+}
 
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
@@ -322,34 +661,5 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     cta: 'Go Elite',
   },
 ];
-
-export function generatePortfolioChartData(): ChartDataPoint[] {
-  const data: ChartDataPoint[] = [];
-  let value = 40000;
-  for (let i = 30; i >= 0; i--) {
-    value += randomBetween(-1500, 2000);
-    value = Math.max(value, 25000);
-    data.push({
-      time: new Date(Date.now() - i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-      value: Number(value.toFixed(2)),
-    });
-  }
-  return data;
-}
-
-export function generateTokenChartData(): ChartDataPoint[] {
-  const data: ChartDataPoint[] = [];
-  let value = 0.001;
-  for (let i = 24; i >= 0; i--) {
-    value *= (1 + randomBetween(-0.1, 0.12));
-    value = Math.max(value, 0.0001);
-    data.push({
-      time: `${24 - i}:00`,
-      value: Number(value.toFixed(8)),
-      volume: Number(randomBetween(10000, 500000).toFixed(0)),
-    });
-  }
-  return data;
-}
 
 export { shortAddress, randomBetween, randomFromArray };

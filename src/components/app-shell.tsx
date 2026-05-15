@@ -21,23 +21,32 @@ import { DemoWelcomeGuide } from '@/components/demo-guide';
 import { AuthModal } from '@/components/auth-modal';
 import { DepositModal } from '@/components/deposit-modal';
 import { PaymentModal } from '@/components/payment-modal';
-import { generateMockWhales, generateMockTokens, generateMockCopyTrades, generateMockAlerts, mockPortfolio } from '@/lib/mock-data';
+import { generateMockWhales, generateMockTokens, generateMockCopyTrades, generateMockAlerts } from '@/lib/mock-data';
 
 export function AppShell() {
   const { currentPage, walletConnected, isAuthenticated, sidebarOpen, setSidebarOpen } = useAppStore();
   const {
-    setWhales, setTokens, setCopyTrades, setAlerts, setPortfolio,
-    addLiveTrade, restoreSession,
+    setWhales, setTokens, setCopyTrades, setAlerts,
+    addLiveTrade, restoreSession, fetchSolPrice, recalculatePortfolio,
   } = useAppStore();
 
-  // Initialize mock data for demo/preview
+  // Initialize mock data for demo/preview and fetch real SOL price
   useEffect(() => {
     setWhales(generateMockWhales());
     setTokens(generateMockTokens());
     setCopyTrades(generateMockCopyTrades());
     setAlerts(generateMockAlerts());
-    setPortfolio(mockPortfolio);
-  }, [setWhales, setTokens, setCopyTrades, setAlerts, setPortfolio]);
+    // Fetch real SOL price from CoinGecko (will recalculate portfolio)
+    fetchSolPrice();
+  }, [setWhales, setTokens, setCopyTrades, setAlerts, fetchSolPrice]);
+
+  // Refresh SOL price every 5 minutes (avoid CoinGecko rate limits)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchSolPrice();
+    }, 300000);
+    return () => clearInterval(interval);
+  }, [fetchSolPrice]);
 
   // Restore session on mount
   useEffect(() => {

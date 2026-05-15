@@ -236,11 +236,13 @@ export function AuthModal() {
       setWalletConnected(true);
     } catch {
       // Even if API fails, demo mode still works locally
-      // Re-ensure demo state
+      // Re-ensure demo state and navigation
       setDemoMode(true);
       setWalletAddress(DEMO_WALLET_ADDRESS);
       setWalletBalance(DEMO_WALLET_BALANCE);
       setWalletConnected(true);
+      setCurrentPage('dashboard');
+      setShowAuthModal(false);
     } finally {
       setDemoLoading(false);
     }
