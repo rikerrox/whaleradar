@@ -17,6 +17,8 @@ import {
   X,
   Zap,
   Play,
+  Plus,
+  Wallet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -35,8 +37,20 @@ const navItems: { icon: React.ElementType; label: string; page: PageView; badge?
 ];
 
 export function Sidebar() {
-  const { currentPage, setCurrentPage, walletAddress, walletBalance, userPlan, alerts, setSidebarOpen, isDemoMode, setShowDemoGuide, setDemoGuideStep } = useAppStore();
+  const { currentPage, setCurrentPage, walletAddress, walletBalance, userPlan, alerts, setSidebarOpen, isDemoMode, setShowDemoGuide, setDemoGuideStep, isAuthenticated, setShowDepositModal, logout } = useAppStore();
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
+
+  const handleDisconnect = () => {
+    if (isAuthenticated) {
+      logout();
+    } else {
+      useAppStore.getState().setWalletConnected(false);
+      useAppStore.getState().setWalletAddress(null);
+      useAppStore.getState().setWalletBalance(0);
+      useAppStore.getState().setDemoMode(false);
+      useAppStore.getState().setCurrentPage('landing');
+    }
+  };
 
   return (
     <div className="w-[280px] h-screen flex flex-col bg-[var(--sidebar)] border-r border-[var(--sidebar-border)]">
@@ -66,7 +80,7 @@ export function Sidebar() {
         <div className="glass-card rounded-lg p-3">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 flex items-center justify-center">
-              <Zap className="w-3 h-3 text-white" />
+              <Wallet className="w-3 h-3 text-white" />
             </div>
             <span className="text-xs text-muted-foreground font-mono">
               {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'Not Connected'}
@@ -90,6 +104,16 @@ export function Sidebar() {
               <Progress value={40} className="h-1" />
             )}
           </div>
+          {/* Quick Deposit Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-2 h-7 text-xs bg-green-500/10 text-green-400 hover:bg-green-500/20 border border-green-500/20"
+            onClick={() => setShowDepositModal(true)}
+          >
+            <Plus className="w-3 h-3 mr-1" />
+            Deposit SOL
+          </Button>
         </div>
       </div>
 
@@ -143,17 +167,11 @@ export function Sidebar() {
           <span>Restart Tour</span>
         </button>
         <button
-          onClick={() => {
-            useAppStore.getState().setWalletConnected(false);
-            useAppStore.getState().setWalletAddress(null);
-            useAppStore.getState().setWalletBalance(0);
-            useAppStore.getState().setDemoMode(false);
-            useAppStore.getState().setCurrentPage('landing');
-          }}
+          onClick={handleDisconnect}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-red-400 hover:bg-red-500/10 transition-all duration-200"
         >
           <LogOut className="w-4 h-4" />
-          <span>Disconnect</span>
+          <span>{isAuthenticated ? 'Logout' : 'Disconnect'}</span>
         </button>
         <p className="text-[9px] text-muted-foreground/50 text-center mt-2 px-2">
           This is not financial advice. Trade at your own risk.

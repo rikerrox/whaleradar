@@ -8,21 +8,65 @@ datasource db {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  walletAddress String   @unique
-  username      String?
-  avatar        String?
-  email         String?
-  plan          String   @default("free") // free, pro, elite
-  solBalance    Float    @default(0)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id             String   @id @default(cuid())
+  email          String?  @unique
+  username       String?
+  passwordHash   String?
+  walletAddress  String?  @unique
+  avatar         String?
+  plan           String   @default("free") // free, pro, elite
+  solBalance     Float    @default(0)
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
 
-  wallets       Wallet[]
-  copyTrades    CopyTrade[]
-  alerts        Alert[]
-  subscriptions Subscription[]
-  watchlist     Watchlist[]
+  wallets        Wallet[]
+  copyTrades     CopyTrade[]
+  alerts         Alert[]
+  subscriptions  Subscription[]
+  watchlist      Watchlist[]
+  transactions   Transaction[]
+  accounts       Account[]
+  sessions       Session[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
 }
 
 model Wallet {
@@ -102,6 +146,8 @@ model CopyTrade {
   status        String   @default("pending") // pending, executed, failed, cancelled
   pnl           Float?
   txHash        String?
+  entryPrice    Float?
+  exitPrice     Float?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 
@@ -157,10 +203,12 @@ model Subscription {
   id              String   @id @default(cuid())
   userId          String
   plan            String   // free, pro, elite
-  status          String   @default("active") // active, cancelled, expired
+  status          String   @default("active") // active, cancelled, expired, pending
   startDate       DateTime @default(now())
   endDate         DateTime?
   stripeSessionId String?
+  paymentMethod   String?  // card, crypto, demo
+  amount          Float?
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
@@ -180,4 +228,25 @@ model Watchlist {
 
   @@unique([userId, tokenAddress])
   @@index([userId])
+}
+
+model Transaction {
+  id              String   @id @default(cuid())
+  userId          String
+  type            String   // deposit, withdrawal, payment, copy_trade, referral
+  amount          Float
+  token           String   @default("SOL")
+  status          String   @default("pending") // pending, completed, failed, cancelled
+  txHash          String?
+  description     String?
+  metadata        String?  // JSON string for additional data
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user            User     @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
 }

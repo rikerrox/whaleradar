@@ -14,58 +14,29 @@ import {
   ScanSearch, Search, Play, Sparkles,
 } from 'lucide-react';
 import { subscriptionPlans, generateMockTrades } from '@/lib/mock-data';
-import { DEMO_WALLET_ADDRESS, DEMO_WALLET_BALANCE } from '@/lib/wallet';
 import { toast } from 'sonner';
 
 const liveWhaleTrades = generateMockTrades(8);
 
 function HeroSection() {
-  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setShowDemoGuide, setDemoGuideStep } = useAppStore();
-  const [isConnecting, setIsConnecting] = useState(false);
+  const { setShowAuthModal, setAuthModalTab, isAuthenticated, setCurrentPage } = useAppStore();
 
-  const handleConnectWallet = async () => {
-    setIsConnecting(true);
-    try {
-      // Always use demo mode for the sandbox
-      setWalletAddress(DEMO_WALLET_ADDRESS);
-      setWalletConnected(true);
-      setWalletBalance(DEMO_WALLET_BALANCE);
-      useAppStore.getState().setDemoMode(true);
-      setDemoGuideStep(0);
-      setShowDemoGuide(true);
-      toast.success('Demo mode activated!', {
-        description: 'Welcome to WhaleRadar AI! Take the quick tour to get started.',
-      });
+  const handleConnectWallet = () => {
+    if (isAuthenticated) {
       setCurrentPage('dashboard');
-    } catch {
-      toast.error('Connection failed', {
-        description: 'Could not connect. Please try again.',
-      });
-    } finally {
-      setIsConnecting(false);
+      return;
     }
+    setShowAuthModal(true);
+    setAuthModalTab('login');
   };
 
-  const handleStartCopyTrading = async () => {
-    setIsConnecting(true);
-    try {
-      setWalletAddress(DEMO_WALLET_ADDRESS);
-      setWalletConnected(true);
-      setWalletBalance(DEMO_WALLET_BALANCE);
-      useAppStore.getState().setDemoMode(true);
-      setDemoGuideStep(3); // Jump to copy trading step
-      setShowDemoGuide(true);
-      toast.success('Demo mode activated!', {
-        description: 'Let\'s set up your first copy trade!',
-      });
+  const handleStartCopyTrading = () => {
+    if (isAuthenticated) {
       setCurrentPage('copy-trading');
-    } catch {
-      toast.error('Connection failed', {
-        description: 'Could not connect. Please try again.',
-      });
-    } finally {
-      setIsConnecting(false);
+      return;
     }
+    setShowAuthModal(true);
+    setAuthModalTab('register');
   };
 
   return (
@@ -139,17 +110,15 @@ function HeroSection() {
           <Button
             size="lg"
             onClick={handleConnectWallet}
-            disabled={isConnecting}
             className="h-12 px-8 bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white font-medium neon-glow-purple transition-all duration-300"
           >
             <Wallet className="w-4 h-4 mr-2" />
-            {isConnecting ? 'Connecting...' : 'Enter Demo Mode'}
+            {isAuthenticated ? 'Go to Dashboard' : 'Get Started'}
           </Button>
           <Button
             size="lg"
             variant="outline"
             onClick={handleStartCopyTrading}
-            disabled={isConnecting}
             className="h-12 px-8 border-white/20 hover:bg-white/10 font-medium"
           >
             Start Copy Trading
@@ -317,19 +286,15 @@ function FeaturesSection() {
 }
 
 function DashboardPreview() {
-  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setShowDemoGuide, setDemoGuideStep } = useAppStore();
+  const { setShowAuthModal, setAuthModalTab, isAuthenticated, setCurrentPage } = useAppStore();
 
   const handleConnect = () => {
-    setWalletAddress(DEMO_WALLET_ADDRESS);
-    setWalletConnected(true);
-    setWalletBalance(DEMO_WALLET_BALANCE);
-    useAppStore.getState().setDemoMode(true);
-    setDemoGuideStep(1); // Start at dashboard step
-    setShowDemoGuide(true);
-    toast.success('Welcome to WhaleRadar!', {
-      description: 'Take the quick tour to see what you can do.',
-    });
-    setCurrentPage('dashboard');
+    if (isAuthenticated) {
+      setCurrentPage('dashboard');
+      return;
+    }
+    setShowAuthModal(true);
+    setAuthModalTab('login');
   };
 
   return (
@@ -424,20 +389,26 @@ function DashboardPreview() {
 }
 
 function PricingSection() {
-  const { setWalletConnected, setWalletAddress, setWalletBalance, setCurrentPage, setUserPlan, setShowDemoGuide, setDemoGuideStep } = useAppStore();
+  const { setShowAuthModal, setAuthModalTab, isAuthenticated, setCurrentPage, setShowPaymentModal, setPaymentPlan } = useAppStore();
 
   const handleSelectPlan = (planId: string) => {
-    setWalletAddress(DEMO_WALLET_ADDRESS);
-    setWalletConnected(true);
-    setWalletBalance(DEMO_WALLET_BALANCE);
-    useAppStore.getState().setDemoMode(true);
-    setUserPlan(planId as 'free' | 'pro' | 'elite');
-    setDemoGuideStep(0);
-    setShowDemoGuide(true);
-    toast.success(`${planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Elite'} plan activated!`, {
-      description: 'Welcome to WhaleRadar AI.',
-    });
-    setCurrentPage('dashboard');
+    if (planId === 'free') {
+      if (isAuthenticated) {
+        setCurrentPage('dashboard');
+      } else {
+        setShowAuthModal(true);
+        setAuthModalTab('register');
+      }
+      return;
+    }
+    // For paid plans, show payment modal or auth modal
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      setAuthModalTab('register');
+      return;
+    }
+    setPaymentPlan(planId);
+    setShowPaymentModal(true);
   };
 
   return (
@@ -670,16 +641,15 @@ function StatsSection() {
 }
 
 function Footer() {
-  const { setWalletConnected, setWalletAddress, setCurrentPage, setWalletBalance, setShowDemoGuide, setDemoGuideStep } = useAppStore();
+  const { setShowAuthModal, setAuthModalTab, isAuthenticated, setCurrentPage } = useAppStore();
 
   const handleEnterDemo = () => {
-    setWalletAddress(DEMO_WALLET_ADDRESS);
-    setWalletConnected(true);
-    setWalletBalance(DEMO_WALLET_BALANCE);
-    useAppStore.getState().setDemoMode(true);
-    setDemoGuideStep(0);
-    setShowDemoGuide(true);
-    setCurrentPage('dashboard');
+    if (isAuthenticated) {
+      setCurrentPage('dashboard');
+    } else {
+      setShowAuthModal(true);
+      setAuthModalTab('login');
+    }
   };
 
   return (

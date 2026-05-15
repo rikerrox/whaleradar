@@ -8,28 +8,34 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import {
-  CreditCard, Check, Star, Zap, Shield, Crown,
-  ArrowRight, Wallet, TrendingUp, Copy, Bell,
+  CreditCard, Check, Star, Zap, Shield, Wallet, TrendingUp, Copy, Bell,
   BarChart3, Brain, Eye, Lock, Users, Globe,
-  Sparkles, Rocket, Award,
+  Sparkles, Rocket, Crown,
 } from 'lucide-react';
 import { subscriptionPlans } from '@/lib/mock-data';
 import { toast } from 'sonner';
 
 export function PricingView() {
-  const { userPlan, setUserPlan, walletConnected, setWalletConnected, setWalletAddress, setCurrentPage } = useAppStore();
+  const { userPlan, isAuthenticated, setShowAuthModal, setAuthModalTab, setShowPaymentModal, setPaymentPlan } = useAppStore();
   const [annual, setAnnual] = useState(false);
 
   const handleSelectPlan = (planId: string) => {
-    if (!walletConnected) {
-      setWalletAddress('7xKXtg2CW87d97TXJSDpbD5jBkheTqA83TZRuJosgAsU');
-      setWalletConnected(true);
-      useAppStore.getState().setDemoMode(true);
-      useAppStore.getState().setWalletBalance(45.8);
+    if (planId === userPlan) return;
+
+    if (planId === 'free') {
+      toast.info('You can downgrade at the end of your billing period.');
+      return;
     }
-    setUserPlan(planId as 'free' | 'pro' | 'elite');
-    toast.success(`${planId === 'free' ? 'Free' : planId === 'pro' ? 'Pro' : 'Elite'} plan activated!`);
-    setCurrentPage('dashboard');
+
+    if (!isAuthenticated) {
+      setShowAuthModal(true);
+      setAuthModalTab('register');
+      toast.info('Please create an account first to upgrade your plan.');
+      return;
+    }
+
+    setPaymentPlan(planId);
+    setShowPaymentModal(true);
   };
 
   const planIcons: Record<string, React.ElementType> = {

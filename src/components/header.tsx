@@ -10,6 +10,10 @@ import {
   ChevronDown,
   ExternalLink,
   Play,
+  Plus,
+  CreditCard,
+  LogOut,
+  User,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -20,6 +24,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuLabel,
 } from '@/components/ui/dropdown-menu';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -30,6 +35,9 @@ export function Header() {
     sidebarOpen, setSidebarOpen, walletAddress, walletBalance,
     alerts, markAlertRead, searchQuery, setSearchQuery, liveTrades,
     isDemoMode, setShowDemoGuide, setDemoGuideStep,
+    isAuthenticated, setShowAuthModal, setAuthModalTab,
+    setShowDepositModal, setShowPaymentModal, setPaymentPlan,
+    logout, user,
   } = useAppStore();
 
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
@@ -143,58 +151,115 @@ export function Header() {
           <Play className="h-4 w-4 text-purple-400" />
         </Button>
 
-        {/* Wallet */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-8 gap-2 px-2">
-              <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 flex items-center justify-center">
-                <Wallet className="w-3.5 h-3.5 text-white" />
-              </div>
-              <span className="text-xs font-mono hidden sm:block">
-                {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'Connect'}
-              </span>
-              <ChevronDown className="h-3 w-3" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent className="bg-[#12121a] border-white/10" align="end">
-            <div className="p-3 border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 flex items-center justify-center">
-                  <Wallet className="w-4 h-4 text-white" />
+        {/* Wallet / Auth */}
+        {isAuthenticated || walletConnected ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-8 gap-2 px-2">
+                <div className="w-6 h-6 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 flex items-center justify-center">
+                  <Wallet className="w-3.5 h-3.5 text-white" />
                 </div>
-                <div>
-                  <p className="text-sm font-medium font-mono">{walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-xs text-muted-foreground">{walletBalance.toFixed(2)} SOL</p>
-                    {isDemoMode && (
-                      <Badge variant="secondary" className="text-[8px] h-3 px-1 bg-green-500/20 text-green-400 border-green-500/30">
-                        DEMO
-                      </Badge>
-                    )}
+                <span className="text-xs font-mono hidden sm:block">
+                  {walletAddress ? `${walletAddress.slice(0, 4)}...${walletAddress.slice(-4)}` : 'Connected'}
+                </span>
+                <ChevronDown className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="bg-[#12121a] border-white/10 w-64" align="end">
+              <div className="p-3 border-b border-white/10">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500 to-cyan-400 flex items-center justify-center">
+                    <Wallet className="w-4 h-4 text-white" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium font-mono">{walletAddress?.slice(0, 8)}...{walletAddress?.slice(-4)}</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-xs text-muted-foreground">{walletBalance.toFixed(2)} SOL</p>
+                      {isDemoMode && (
+                        <Badge variant="secondary" className="text-[8px] h-3 px-1 bg-green-500/20 text-green-400 border-green-500/30">
+                          DEMO
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <DropdownMenuItem className="text-xs cursor-pointer">
-              <ExternalLink className="w-3 h-3 mr-2" />
-              View on Solscan
-            </DropdownMenuItem>
-            <DropdownMenuSeparator className="bg-white/10" />
-            <DropdownMenuItem
-              className="text-xs cursor-pointer text-red-400"
+              
+              <DropdownMenuLabel className="text-xs text-muted-foreground py-2">Wallet</DropdownMenuLabel>
+              <DropdownMenuItem className="text-xs cursor-pointer" onClick={() => setShowDepositModal(true)}>
+                <Plus className="w-3 h-3 mr-2 text-green-400" />
+                Deposit SOL
+              </DropdownMenuItem>
+              <DropdownMenuItem className="text-xs cursor-pointer" onClick={() => {
+                setPaymentPlan('pro');
+                setShowPaymentModal(true);
+              }}>
+                <CreditCard className="w-3 h-3 mr-2 text-purple-400" />
+                Upgrade Plan
+              </DropdownMenuItem>
+              
+              {user && (
+                <>
+                  <DropdownMenuSeparator className="bg-white/10" />
+                  <DropdownMenuLabel className="text-xs text-muted-foreground py-2">Account</DropdownMenuLabel>
+                  <DropdownMenuItem className="text-xs cursor-pointer">
+                    <User className="w-3 h-3 mr-2" />
+                    {user.username || user.email || 'Profile'}
+                  </DropdownMenuItem>
+                </>
+              )}
+
+              <DropdownMenuSeparator className="bg-white/10" />
+              <DropdownMenuItem className="text-xs cursor-pointer">
+                <ExternalLink className="w-3 h-3 mr-2" />
+                View on Solscan
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="text-xs cursor-pointer text-red-400"
+                onClick={() => {
+                  if (isAuthenticated) {
+                    logout();
+                    toast.info('Logged out successfully');
+                  } else {
+                    useAppStore.getState().setWalletConnected(false);
+                    useAppStore.getState().setWalletAddress(null);
+                    useAppStore.getState().setWalletBalance(0);
+                    useAppStore.getState().setDemoMode(false);
+                    useAppStore.getState().setCurrentPage('landing');
+                    toast.info('Wallet disconnected');
+                  }
+                }}
+              >
+                <LogOut className="w-3 h-3 mr-2" />
+                {isAuthenticated ? 'Logout' : 'Disconnect Wallet'}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 text-xs"
               onClick={() => {
-                useAppStore.getState().setWalletConnected(false);
-                useAppStore.getState().setWalletAddress(null);
-                useAppStore.getState().setWalletBalance(0);
-                useAppStore.getState().setDemoMode(false);
-                useAppStore.getState().setCurrentPage('landing');
-                toast.info('Wallet disconnected');
+                setShowAuthModal(true);
+                setAuthModalTab('login');
               }}
             >
-              Disconnect Wallet
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+              Sign In
+            </Button>
+            <Button
+              size="sm"
+              className="h-8 text-xs bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white"
+              onClick={() => {
+                setShowAuthModal(true);
+                setAuthModalTab('register');
+              }}
+            >
+              Get Started
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );

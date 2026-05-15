@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { shortAddress, randomBetween, TOKEN_SYMBOLS, TOKEN_NAMES } from '@/lib/mock-data';
 import { toast } from 'sonner';
+import { apiClient } from '@/lib/api-client';
 import type { CopyTrade, AlertItem } from '@/lib/types';
 
 function CopyTradeCard({ trade }: { trade: CopyTrade }) {
@@ -155,35 +156,103 @@ function NewCopyTradeForm() {
 
     setIsCreating(true);
 
-    // Simulate creating the trade
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    try {
+      // Try backend API first
+      if (apiClient.isAuthenticated()) {
+        const result = await apiClient.executeCopyTrade({
+          whaleWalletId: whale.id,
+          whaleLabel: whale.label,
+          tokenAddress: `token-${tokenSymbol.toLowerCase()}`,
+          tokenSymbol: tokenSymbol.toUpperCase(),
+          tokenName: TOKEN_NAMES[TOKEN_SYMBOLS.indexOf(tokenSymbol.toUpperCase())] || tokenSymbol.toUpperCase(),
+          type: tradeType,
+          amount: Number((maxPosition[0] * (copyPercent[0] / 100)).toFixed(2)),
+          copyPercent: copyPercent[0],
+          stopLoss: stopLoss[0],
+          takeProfit: takeProfit[0],
+          maxPosition: maxPosition[0],
+          slippage: slippage[0],
+        });
 
-    const amount = Math.min(maxPosition[0] * (copyPercent[0] / 100), walletBalance * 0.5);
-    const newTrade: CopyTrade = {
-      id: `ct-${Date.now()}`,
-      whaleWalletId: whale.id,
-      whaleLabel: whale.label,
-      tokenSymbol: tokenSymbol.toUpperCase(),
-      tokenName: TOKEN_NAMES[TOKEN_SYMBOLS.indexOf(tokenSymbol.toUpperCase())] || tokenSymbol.toUpperCase(),
-      type: tradeType,
-      amount: Number(amount.toFixed(2)),
-      copyPercent: copyPercent[0],
-      status: 'pending',
-      pnl: null,
-      txHash: null,
-      createdAt: new Date(),
-    };
+        if (result.error) {
+          toast.error('Trade failed', { description: result.error });
+          setIsCreating(false);
+          return;
+        }
 
-    addCopyTrade(newTrade);
-    toast.success('Copy trade created!', { 
-      description: `${tradeType === 'buy' ? 'Buying' : 'Selling'} ${tokenSymbol.toUpperCase()} — copying ${whale.label} at ${copyPercent[0]}%` 
-    });
+        const amount = Number((maxPosition[0] * (copyPercent[0] / 100)).toFixed(2));
+        const newTrade: CopyTrade = {
+          id: result.data?.copyTrade?.id as string || `ct-${Date.now()}`,
+          whaleWalletId: whale.id,
+          whaleLabel: whale.label,
+          tokenSymbol: tokenSymbol.toUpperCase(),
+          tokenName: TOKEN_NAMES[TOKEN_SYMBOLS.indexOf(tokenSymbol.toUpperCase())] || tokenSymbol.toUpperCase(),
+          type: tradeType,
+          amount: Number(amount.toFixed(2)),
+          copyPercent: copyPercent[0],
+          status: 'pending',
+          pnl: null,
+          txHash: null,
+          createdAt: new Date(),
+        };
 
-    // Simulate execution after 3 seconds
-    setTimeout(() => {
-      const pnl = randomBetween(-80, 250);
-      updateCopyTradeStatusSim(newTrade.id, pnl);
-    }, 3000);
+        addCopyTrade(newTrade);
+        
+        // Deduct from local balance
+        if (tradeType === 'buy') {
+          useAppStore.getState().setWalletBalance(useAppStore.getState().walletBalance - amount);
+        }
+
+        toast.success('Copy trade created!', {
+          description: `${tradeType === 'buy' ? 'Buying' : 'Selling'} ${tokenSymbol.toUpperCase()} — copying ${whale.label} at ${copyPercent[0]}%`
+        });
+
+        // Refresh wallet balance from backend
+        useAppStore.getState().refreshUser();
+
+        // Simulate execution
+        setTimeout(() => {
+          const pnl = randomBetween(-80, 250);
+          const success = Math.random() > 0.12;
+          if (success) {
+            updateCopyTradeStatusSim(newTrade.id, pnl);
+          } else {
+            const { updateCopyTradeStatus } = useAppStore.getState();
+            updateCopyTradeStatus(newTrade.id, 'failed');
+            toast.error('Trade failed', { description: 'The copy trade could not be executed. Try retrying.' });
+          }
+        }, 3000);
+      } else {
+        // Fallback to local simulation for demo mode
+        const amount = Math.min(maxPosition[0] * (copyPercent[0] / 100), walletBalance * 0.5);
+        const newTrade: CopyTrade = {
+          id: `ct-${Date.now()}`,
+          whaleWalletId: whale.id,
+          whaleLabel: whale.label,
+          tokenSymbol: tokenSymbol.toUpperCase(),
+          tokenName: TOKEN_NAMES[TOKEN_SYMBOLS.indexOf(tokenSymbol.toUpperCase())] || tokenSymbol.toUpperCase(),
+          type: tradeType,
+          amount: Number(amount.toFixed(2)),
+          copyPercent: copyPercent[0],
+          status: 'pending',
+          pnl: null,
+          txHash: null,
+          createdAt: new Date(),
+        };
+
+        addCopyTrade(newTrade);
+        toast.success('Copy trade created!', {
+          description: `${tradeType === 'buy' ? 'Buying' : 'Selling'} ${tokenSymbol.toUpperCase()} — copying ${whale.label} at ${copyPercent[0]}%`
+        });
+
+        setTimeout(() => {
+          const pnl = randomBetween(-80, 250);
+          updateCopyTradeStatusSim(newTrade.id, pnl);
+        }, 3000);
+      }
+    } catch {
+      toast.error('Trade failed', { description: 'An unexpected error occurred.' });
+    }
 
     setIsCreating(false);
     setTokenSymbol('');

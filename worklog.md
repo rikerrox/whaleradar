@@ -40,57 +40,38 @@ Stage Summary:
 - Responsive design with mobile sidebar toggle
 
 ---
-Task ID: 2
+Task ID: 4
 Agent: Main Orchestrator
-Task: Create interactive demo with working copy trading, wallet connection, and guided tour
+Task: Integrate full backend - user registration, payment gateway, SOL deposits, copy trade execution
 
 Work Log:
-- Enhanced Zustand store with new actions: toggleWhaleFollow, addCopyTrade, updateCopyTradeStatus, toggleWatchlist, isDemoMode, showDemoGuide, demoGuideStep
-- Fixed Copy Trading form: "Start Copy Trading" button now actually creates copy trades with whale selection, token input, buy/sell toggle, and risk management configuration
-- Copy trades now simulate execution (pending → executed/failed) with realistic timing and random PnL
-- Added cancel/retry buttons on copy trade cards that work with state updates
-- Made Quick Buy button in Coin Details work with simulated execution and toast feedback
-- Made "Copy Whale Trades" button in Coin Details create actual copy trades in the store
-- Made "Add to Watchlist" button in Coin Details toggle watchlist state with toast feedback
-- Made Follow/Unfollow button in Wallet Profile work with store's toggleWhaleFollow and toast notifications
-- Made recent trades in Wallet Profile clickable (navigates to coin details)
-- Created DemoWelcomeGuide component with 6-step guided tour covering all major features
-- Updated landing page: "Connect Phantom Wallet" changed to "Enter Demo Mode" with green badge
-- Added "Interactive Demo — Try everything free!" badge at top of hero section
-- Demo guide shows automatically when user enters demo mode for the first time
-- Added "Restart Tour" button in sidebar and header for re-viewing the guide
-- Updated header with DEMO MODE badge and Play button for restarting tour
-- Updated sidebar with DEMO badge, Restart Tour button, and proper disconnect flow
-- All follow/unfollow actions now sync across views via store
-- Added alert notifications when copy trades execute, watches are added, etc.
-- Cleaned up unused imports and ensured all code passes ESLint
+- Updated Prisma schema: Added Account, Session, VerificationToken, Transaction models; updated User model with email/passwordHash/isActive fields; updated Subscription with paymentMethod/amount fields; updated CopyTrade with entryPrice/exitPrice fields
+- Pushed schema changes to SQLite database
+- Installed bcryptjs for password hashing
+- Created auth utility library (src/lib/auth.ts): hashPassword, verifyPassword, createUserWithEmail, createUserWithWallet, authenticateUser, getUserStats, generateSessionToken
+- Created 5 auth API routes: /api/auth/register, /api/auth/login, /api/auth/logout, /api/auth/me, /api/auth/update
+- Created 4 payment/deposit API routes: /api/payments/create-checkout, /api/payments/verify, /api/deposits, /api/wallet/balance
+- Created 4 copy trade/tracking API routes: /api/copy-trades/execute, /api/copy-trades/[id], /api/transactions, /api/user/stats
+- Created API client library (src/lib/api-client.ts): Full typed client with session token management, localStorage persistence, all API methods
+- Updated Zustand store with auth state: user, isAuthenticated, sessionToken, loginWithEmail, loginWithWallet, register, logout, restoreSession, refreshUser, plus auth/deposit/payment modal state
+- Created auth-modal.tsx: Login/Register with email/password, Phantom wallet connect, Demo Mode quick-start
+- Created deposit-modal.tsx: SOL deposits with quick-select amounts, simulated Phantom deposits, transaction history
+- Created payment-modal.tsx: Subscription checkout with card/SOL payment options, monthly/annual toggle, processing animation
+- Updated app-shell.tsx: Added AuthModal, DepositModal, PaymentModal components, session restoration on mount
+- Updated landing page: "Get Started" opens auth modal instead of auto-connecting; "Start Copy Trading" opens register tab
+- Updated header: Added Sign In/Get Started buttons for unauthenticated users, Deposit SOL/Upgrade Plan options in dropdown, Logout action
+- Updated sidebar: Added Deposit SOL button in wallet card, Logout action, auth-aware disconnect
+- Updated copy trading view: Backend API integration with apiClient.executeCopyTrade(), balance checking, plan limit enforcement
+- Updated pricing view: Opens payment modal for paid plans, auth modal for unauthenticated users
+- Tested all API endpoints: Registration, Login, Deposits, Copy Trades, Payment Checkout/Verification, Wallet Balance, User Stats
+- ESLint passes clean, dev server running on port 3000
 
 Stage Summary:
-- Complete interactive demo with working copy trading, quick buy, watchlist, follow/unfollow
-- 6-step guided tour that introduces all features to new users
-- Demo mode clearly indicated throughout the UI with green DEMO badges
-- All action buttons now functional with realistic simulation and toast feedback
-- Copy trades simulate execution lifecycle: pending → executed (with PnL) or failed
-- Alert system generates real-time notifications for user actions
-- Clean disconnect flow that resets all demo state
-
----
-Task ID: 3
-Agent: Main Orchestrator
-Task: Fix app 500 error and verify demo navigation flow
-
-Work Log:
-- Identified root cause of 500 error: TOKEN_SYMBOLS, TOKEN_NAMES, and DEX_LIST were not exported from mock-data.ts but were imported by copy-trading.tsx and coin-details.tsx
-- Fixed mock-data.ts: Changed `const` to `export const` for TOKEN_SYMBOLS, TOKEN_NAMES, and DEX_LIST
-- Verified all other view files have correct imports (whale-tracker, scanner, leaderboard, dashboard, wallet-profile, pricing, settings, alerts)
-- Confirmed app loads with 200 response code after fix
-- Ran ESLint - passes clean with no errors
-- Verified both services running: Next.js (port 3000) and realtime-service (port 3003)
-- Confirmed complete demo flow: Landing → Enter Demo Mode → Dashboard → Guided Tour → Navigate all views → Copy Trading → Disconnect
-
-Stage Summary:
-- Fixed critical 500 error caused by missing exports in mock-data.ts
-- All 11 views now load correctly
-- Demo mode fully functional: wallet connection, guided tour, copy trading, whale tracking, scanner, alerts
-- App serving 200 on localhost:3000
-- ESLint passes clean
+- Full backend integration complete with 21 API routes
+- User registration with email/password + optional wallet linking
+- Session-based authentication with Bearer tokens stored in SQLite
+- Simulated Stripe payment gateway (create checkout -> verify -> activate plan)
+- SOL deposit system with auto-completion and balance tracking
+- Copy trade execution engine with balance checks, plan limits, and transaction logging
+- All frontend views connected to backend APIs
+- Complete user flow: Register -> Login -> Deposit SOL -> Upgrade Plan -> Execute Copy Trades

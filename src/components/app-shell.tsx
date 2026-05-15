@@ -18,16 +18,19 @@ import { AlertsView } from '@/components/views/alerts';
 import { WalletProfileView } from '@/components/views/wallet-profile';
 import { CoinDetailsView } from '@/components/views/coin-details';
 import { DemoWelcomeGuide } from '@/components/demo-guide';
+import { AuthModal } from '@/components/auth-modal';
+import { DepositModal } from '@/components/deposit-modal';
+import { PaymentModal } from '@/components/payment-modal';
 import { generateMockWhales, generateMockTokens, generateMockCopyTrades, generateMockAlerts, mockPortfolio } from '@/lib/mock-data';
 
 export function AppShell() {
   const { currentPage, walletConnected, sidebarOpen, setSidebarOpen } = useAppStore();
   const {
     setWhales, setTokens, setCopyTrades, setAlerts, setPortfolio,
-    addLiveTrade,
+    addLiveTrade, restoreSession,
   } = useAppStore();
 
-  // Initialize mock data
+  // Initialize mock data for demo/preview
   useEffect(() => {
     setWhales(generateMockWhales());
     setTokens(generateMockTokens());
@@ -35,6 +38,11 @@ export function AppShell() {
     setAlerts(generateMockAlerts());
     setPortfolio(mockPortfolio);
   }, [setWhales, setTokens, setCopyTrades, setAlerts, setPortfolio]);
+
+  // Restore session on mount
+  useEffect(() => {
+    restoreSession();
+  }, [restoreSession]);
 
   // Connect to real-time WebSocket service
   const { connected: realtimeConnected } = useRealtime();
@@ -98,7 +106,10 @@ export function AppShell() {
 
   return (
     <>
-      {/* Demo Guide Overlay */}
+      {/* Global Modals */}
+      <AuthModal />
+      <DepositModal />
+      <PaymentModal />
       <DemoWelcomeGuide />
 
       {!showAppShell ? (
