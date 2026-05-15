@@ -140,13 +140,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       const userData = result.data as User & { stats: Record<string, unknown> };
       const token = (result as { sessionToken?: string }).sessionToken;
+      const isDemo = get().isDemoMode;
       set({
         user: userData,
         isAuthenticated: true,
         sessionToken: token || null,
         walletConnected: true,
-        walletAddress: userData.walletAddress,
-        walletBalance: userData.solBalance,
+        walletAddress: isDemo ? get().walletAddress : userData.walletAddress,
+        walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: userData.plan,
       });
       return { success: true };
@@ -158,6 +159,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   loginWithWallet: async (walletAddress) => {
     try {
       const result = await apiClient.loginWithWallet(walletAddress);
+      const isDemo = get().isDemoMode;
       if (result.error) {
         // If wallet not found, auto-register
         if (result.error.includes('No account found')) {
@@ -177,8 +179,8 @@ export const useAppStore = create<AppState>((set, get) => ({
             isAuthenticated: true,
             sessionToken: token || null,
             walletConnected: true,
-            walletAddress: userData.walletAddress,
-            walletBalance: userData.solBalance,
+            walletAddress: isDemo ? get().walletAddress : (userData.walletAddress || walletAddress),
+            walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
             userPlan: userData.plan || 'free',
           });
           return { success: true };
@@ -192,8 +194,8 @@ export const useAppStore = create<AppState>((set, get) => ({
         isAuthenticated: true,
         sessionToken: token || null,
         walletConnected: true,
-        walletAddress: userData.walletAddress,
-        walletBalance: userData.solBalance,
+        walletAddress: isDemo ? get().walletAddress : (userData.walletAddress || walletAddress),
+        walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: userData.plan,
       });
       return { success: true };
@@ -210,13 +212,14 @@ export const useAppStore = create<AppState>((set, get) => ({
       }
       const userData = result.data as User;
       const token = (result as { sessionToken?: string }).sessionToken;
+      const isDemo = get().isDemoMode;
       set({
         user: userData,
         isAuthenticated: true,
         sessionToken: token || null,
-        walletConnected: !!userData.walletAddress,
-        walletAddress: userData.walletAddress,
-        walletBalance: userData.solBalance,
+        walletConnected: true,
+        walletAddress: isDemo ? get().walletAddress : (userData.walletAddress || walletAddress || null),
+        walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: 'free',
       });
       return { success: true };
@@ -251,12 +254,13 @@ export const useAppStore = create<AppState>((set, get) => ({
         return;
       }
       const userData = result.data as User & { stats: Record<string, unknown> };
+      const isDemo = get().isDemoMode;
       set({
         user: userData,
         isAuthenticated: true,
         walletConnected: true,
-        walletAddress: userData.walletAddress,
-        walletBalance: userData.solBalance,
+        walletAddress: isDemo ? get().walletAddress : userData.walletAddress,
+        walletBalance: isDemo ? get().walletBalance : (userData.solBalance || 0),
         userPlan: userData.plan,
       });
     } catch {
@@ -267,6 +271,8 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   refreshUser: async () => {
     if (!apiClient.isAuthenticated()) return;
+    const isDemo = get().isDemoMode;
+    if (isDemo) return; // Don't override demo state
     try {
       const result = await apiClient.getWalletBalance();
       if (result.data && !result.error) {

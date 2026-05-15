@@ -78,16 +78,28 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    // Re-fetch user to get updated wallet address after linking
+    const updatedUser = await db.user.findUnique({
+      where: { id: user.id },
+      include: {
+        subscriptions: {
+          where: { status: 'active' },
+          orderBy: { createdAt: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
     // Get user stats
     const stats = {
       unreadAlerts: 0,
       activeCopyTrades: 0,
       watchlistCount: 0,
-      subscription: user.subscriptions[0] || null,
+      subscription: (updatedUser?.subscriptions?.[0]) || null,
     };
 
-    // Return user data (without password)
-    const { passwordHash: _, ...safeUser } = user;
+    // Return updated user data (without password)
+    const { passwordHash: _, ...safeUser } = updatedUser || user;
 
     return NextResponse.json({
       data: {

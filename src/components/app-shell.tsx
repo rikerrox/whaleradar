@@ -24,7 +24,7 @@ import { PaymentModal } from '@/components/payment-modal';
 import { generateMockWhales, generateMockTokens, generateMockCopyTrades, generateMockAlerts, mockPortfolio } from '@/lib/mock-data';
 
 export function AppShell() {
-  const { currentPage, walletConnected, sidebarOpen, setSidebarOpen } = useAppStore();
+  const { currentPage, walletConnected, isAuthenticated, sidebarOpen, setSidebarOpen } = useAppStore();
   const {
     setWhales, setTokens, setCopyTrades, setAlerts, setPortfolio,
     addLiveTrade, restoreSession,
@@ -73,7 +73,7 @@ export function AppShell() {
     return () => window.removeEventListener('resize', handleResize);
   }, [setSidebarOpen]);
 
-  const showAppShell = walletConnected && currentPage !== 'landing';
+  const showAppShell = (walletConnected || isAuthenticated) && currentPage !== 'landing';
 
   const renderView = () => {
     switch (currentPage) {

@@ -198,7 +198,7 @@ export function AuthModal() {
   const handleDemoMode = async () => {
     setDemoLoading(true);
     try {
-      // Set up demo state
+      // Set up demo state immediately so user sees the dashboard
       setWalletConnected(true);
       setWalletAddress(DEMO_WALLET_ADDRESS);
       setWalletBalance(DEMO_WALLET_BALANCE);
@@ -217,19 +217,30 @@ export function AuthModal() {
         description: 'Explore all features with simulated data',
       });
 
-      // Try to login/register with demo wallet for API calls
-      const result = await loginWithWallet(DEMO_WALLET_ADDRESS);
-      if (!result.success) {
-        // Try register as fallback
-        await register(
-          `demo@whaleradar.io`,
-          `DemoWhale`,
-          `DemoWhaleRadar2024!`,
-          DEMO_WALLET_ADDRESS
-        );
+      // Try to login or register with demo credentials for API calls
+      // First try logging in with demo email (if account already exists)
+      const loginResult = await loginWithEmail('demo@whaleradar.io', 'DemoWhaleRadar2024!');
+      if (!loginResult.success) {
+        // Try wallet login (might auto-register)
+        const walletResult = await loginWithWallet(DEMO_WALLET_ADDRESS);
+        if (!walletResult.success) {
+          // Last resort: register with demo credentials
+          await register('demo@whaleradar.io', 'DemoWhale', 'DemoWhaleRadar2024!', DEMO_WALLET_ADDRESS);
+        }
       }
+
+      // Re-ensure demo state is preserved after API calls
+      setDemoMode(true);
+      setWalletAddress(DEMO_WALLET_ADDRESS);
+      setWalletBalance(DEMO_WALLET_BALANCE);
+      setWalletConnected(true);
     } catch {
       // Even if API fails, demo mode still works locally
+      // Re-ensure demo state
+      setDemoMode(true);
+      setWalletAddress(DEMO_WALLET_ADDRESS);
+      setWalletBalance(DEMO_WALLET_BALANCE);
+      setWalletConnected(true);
     } finally {
       setDemoLoading(false);
     }

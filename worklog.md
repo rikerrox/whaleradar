@@ -96,3 +96,23 @@ Stage Summary:
 - Password validation now consistent (8 chars min) between client and server
 - Session token generation now consistent (generateSessionToken) between register and login
 - Demo mode login flow now works end-to-end
+
+---
+Task ID: 6
+Agent: Main Orchestrator
+Task: Fix demo mode not navigating to dashboard after registration
+
+Work Log:
+- Diagnosed root cause: `showAppShell` in app-shell.tsx only checked `walletConnected`, but after email registration (without wallet), `walletConnected` was set to false, preventing dashboard from showing
+- Fixed app-shell.tsx: Changed `showAppShell = walletConnected && currentPage !== 'landing'` to `showAppShell = (walletConnected || isAuthenticated) && currentPage !== 'landing'` — now shows dashboard when either wallet is connected OR user is authenticated
+- Fixed register API route: Server was returning stale user data (pre-wallet-linking) with `walletAddress: null`. Added re-fetch of user after wallet linking so the response includes the correct wallet address
+- Fixed store.ts auth methods: All auth methods (loginWithEmail, loginWithWallet, register, restoreSession, refreshUser) now check `isDemoMode` before overwriting wallet state — demo wallet address and balance are preserved when API responses come back
+- Fixed store.ts register method: Changed `walletConnected: !!userData.walletAddress` to `walletConnected: true` — any authenticated user should see the dashboard
+- Improved auth-modal.tsx handleDemoMode: Added fallback login chain (email login → wallet login → register), and re-ensures demo state after API calls complete
+- ESLint passes clean, no runtime errors
+
+Stage Summary:
+- Dashboard now shows for all authenticated users, not just wallet-connected ones
+- Demo mode state (wallet address, balance) is preserved through API responses
+- Register API returns correct user data with wallet address
+- Demo mode flow: Click "Enter Demo Mode" → dashboard loads immediately → API auth happens in background
