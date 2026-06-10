@@ -72,13 +72,14 @@ function PortfolioCard() {
 }
 
 function StatsCards() {
-  const { portfolio } = useAppStore();
+  const { portfolio, solPrice } = useAppStore();
+  const solPriceUsd = solPrice || 86;
 
   const stats = [
     {
       label: 'SOL Balance',
       value: `${portfolio.solBalance.toFixed(2)} SOL`,
-      sub: '~$6,510',
+      sub: `~$${(portfolio.solBalance * solPriceUsd).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
       icon: Coins,
       color: 'text-cyan-400',
       bg: 'bg-cyan-500/10',
@@ -137,13 +138,9 @@ function StatsCards() {
 }
 
 function ActivePositions() {
-  const positions = [
-    { symbol: 'WIF', name: 'dogwifhat', amount: 5000, value: 8250, pnl: 3250, pnlPercent: 65, allocation: 35 },
-    { symbol: 'BONK', name: 'Bonk', amount: 50000000, value: 5200, pnl: -800, pnlPercent: -13.3, allocation: 21 },
-    { symbol: 'PEPE', name: 'Pepe', amount: 250000, value: 3800, pnl: 1200, pnlPercent: 46.2, allocation: 15 },
-    { symbol: 'BOME', name: 'BOOK OF MEME', amount: 100000, value: 2100, pnl: -200, pnlPercent: -8.7, allocation: 9 },
-    { symbol: 'FLOKI', name: 'Floki Inu', amount: 80000, value: 1900, pnl: 450, pnlPercent: 31, allocation: 8 },
-  ];
+  const { solPrice, liveTokenPrices } = useAppStore();
+  const solPriceUsd = solPrice || 86;
+  const positions = calculatePositions(solPriceUsd, liveTokenPrices);
 
   return (
     <Card className="glass-card h-full">
@@ -172,7 +169,7 @@ function ActivePositions() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-medium">${pos.value.toLocaleString()}</p>
+                  <p className="text-sm font-medium">${pos.currentValue.toLocaleString()}</p>
                   <p className={`text-xs ${pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                     {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toLocaleString()} ({pos.pnlPercent}%)
                   </p>

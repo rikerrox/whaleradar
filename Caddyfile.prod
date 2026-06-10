@@ -1,4 +1,4 @@
-{YOUR_DOMAIN} {
+whaleradar.app {
     # WebSocket upgrade support
     @websocket {
         header Connection *Upgrade*

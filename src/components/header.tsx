@@ -33,7 +33,7 @@ import { toast } from 'sonner';
 export function Header() {
   const {
     sidebarOpen, setSidebarOpen, walletAddress, walletBalance,
-    alerts, markAlertRead, searchQuery, setSearchQuery, liveTrades,
+    alerts, markAlertRead, markAllAlertsRead, searchQuery, setSearchQuery, liveTrades,
     isDemoMode, setShowDemoGuide, setDemoGuideStep,
     isAuthenticated, setShowAuthModal, setAuthModalTab,
     setShowDepositModal, setShowPaymentModal, setPaymentPlan,
@@ -107,34 +107,54 @@ export function Header() {
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80 p-0 bg-[#12121a] border-white/10" align="end">
-            <div className="p-3 border-b border-white/10">
+            <div className="p-3 border-b border-white/10 flex items-center justify-between">
               <h3 className="text-sm font-semibold">Notifications</h3>
+              {unreadAlerts > 0 && (
+                <button
+                  onClick={() => markAllAlertsRead()}
+                  className="text-[10px] text-purple-400 hover:text-purple-300 transition-colors"
+                >
+                  Mark all read
+                </button>
+              )}
             </div>
             <ScrollArea className="max-h-80">
-              {alerts.slice(0, 10).map((alert) => (
-                <div
-                  key={alert.id}
-                  className={`p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${
-                    !alert.isRead ? 'bg-purple-500/5' : ''
-                  }`}
-                  onClick={() => markAlertRead(alert.id)}
-                >
-                  <div className="flex items-start gap-2">
-                    <div className={`w-2 h-2 rounded-full mt-1.5 ${
-                      alert.type === 'whale_buy' ? 'bg-green-500' :
-                      alert.type === 'whale_sell' ? 'bg-red-500' :
-                      alert.type === 'volume_spike' ? 'bg-yellow-500' :
-                      alert.type === 'new_token' ? 'bg-cyan-500' :
-                      'bg-purple-500'
-                    }`} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium">{alert.title}</p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{alert.message}</p>
+              {alerts.slice(0, 10).map((alert) => {
+                const mins = Math.floor((Date.now() - new Date(alert.timestamp).getTime()) / 60000);
+                const timeStr = mins < 1 ? 'just now' : mins < 60 ? `${mins}m ago` : `${Math.floor(mins / 60)}h ago`;
+                return (
+                  <div
+                    key={alert.id}
+                    className={`p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${
+                      !alert.isRead ? 'bg-purple-500/5' : ''
+                    }`}
+                    onClick={() => markAlertRead(alert.id)}
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className={`w-2 h-2 rounded-full mt-1.5 ${
+                        alert.type === 'whale_buy' ? 'bg-green-500' :
+                        alert.type === 'whale_sell' ? 'bg-red-500' :
+                        alert.type === 'volume_spike' ? 'bg-yellow-500' :
+                        alert.type === 'new_token' ? 'bg-cyan-500' :
+                        'bg-purple-500'
+                      }`} />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-xs font-medium">{alert.title}</p>
+                          <span className="text-[9px] text-muted-foreground whitespace-nowrap">{timeStr}</span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{alert.message}</p>
+                      </div>
+                      {!alert.isRead && <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5" />}
                     </div>
-                    {!alert.isRead && <div className="w-1.5 h-1.5 rounded-full bg-purple-400 mt-1.5" />}
                   </div>
+                );
+              })}
+              {alerts.length === 0 && (
+                <div className="p-6 text-center text-muted-foreground text-xs">
+                  No notifications yet
                 </div>
-              ))}
+              )}
             </ScrollArea>
           </PopoverContent>
         </Popover>

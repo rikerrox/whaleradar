@@ -129,7 +129,7 @@ function CopyTradeCard({ trade }: { trade: CopyTrade }) {
 }
 
 function NewCopyTradeForm() {
-  const { whales, addCopyTrade, addAlert, walletBalance } = useAppStore();
+  const { whales, addCopyTrade, addAlert, walletBalance, solPrice } = useAppStore();
   const [selectedWhaleId, setSelectedWhaleId] = useState('');
   const [copyPercent, setCopyPercent] = useState([50]);
   const [stopLoss, setStopLoss] = useState([15]);
@@ -454,7 +454,7 @@ function NewCopyTradeForm() {
         <div className="p-3 rounded-lg bg-white/5 border border-white/5">
           <div className="flex items-center justify-between text-xs mb-1">
             <span className="text-muted-foreground">Estimated Cost</span>
-            <span className="font-medium">{(maxPosition[0] * copyPercent[0] / 100).toFixed(2)} SOL (~${(maxPosition[0] * copyPercent[0] / 100 * 142.58).toFixed(2)})</span>
+            <span className="font-medium">{(maxPosition[0] * copyPercent[0] / 100).toFixed(2)} SOL (~${(maxPosition[0] * copyPercent[0] / 100 * solPrice).toFixed(2)})</span>
           </div>
           <div className="flex items-center justify-between text-xs">
             <span className="text-muted-foreground">Your Balance</span>

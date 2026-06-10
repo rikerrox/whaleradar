@@ -31,13 +31,11 @@ import {
   Globe,
 } from 'lucide-react';
 
-const SOL_PRICE_USD = 142.58;
-
 const PLAN_CONFIG = {
   pro: {
     name: 'Pro',
-    monthlyPrice: 49,
-    annualPrice: 470,
+    monthlyPrice: 9.99,
+    annualPrice: 95.90,
     icon: Zap,
     color: 'purple',
     gradient: 'from-purple-600 to-purple-400',
@@ -51,8 +49,8 @@ const PLAN_CONFIG = {
   },
   elite: {
     name: 'Elite',
-    monthlyPrice: 149,
-    annualPrice: 1430,
+    monthlyPrice: 19.99,
+    annualPrice: 191.90,
     icon: Crown,
     color: 'yellow',
     gradient: 'from-yellow-600 to-amber-400',
@@ -66,9 +64,32 @@ const PLAN_CONFIG = {
       'Dedicated account manager',
     ],
   },
+  ultimate: {
+    name: 'Ultimate',
+    monthlyPrice: 29.99,
+    annualPrice: 287.90,
+    icon: Star,
+    color: 'cyan',
+    gradient: 'from-cyan-600 to-blue-400',
+    borderGlow: 'border-cyan-500/30',
+    benefits: [
+      'Everything in Elite',
+      'White-label dashboard',
+      'Custom whale strategies',
+      'Multi-wallet management',
+      'Institutional-grade analytics',
+      'SLA guarantee',
+    ],
+  },
 } as const;
 
 type PlanKey = keyof typeof PLAN_CONFIG;
+
+const PLAN_COLORS: Record<PlanKey, { text: string; bg: string; border: string; hex: string; hexBg: string; hexBorder: string }> = {
+  pro: { text: 'text-purple-400', bg: 'bg-purple-500/20', border: 'border-purple-500/30', hex: '#a855f7', hexBg: 'rgba(168,85,247,0.2)', hexBorder: 'rgba(168,85,247,0.3)' },
+  elite: { text: 'text-yellow-400', bg: 'bg-yellow-500/20', border: 'border-yellow-500/30', hex: '#facc15', hexBg: 'rgba(234,179,8,0.2)', hexBorder: 'rgba(234,179,8,0.3)' },
+  ultimate: { text: 'text-cyan-400', bg: 'bg-cyan-500/20', border: 'border-cyan-500/30', hex: '#22d3ee', hexBg: 'rgba(34,211,238,0.2)', hexBorder: 'rgba(34,211,238,0.3)' },
+};
 
 export function PaymentModal() {
   const {
@@ -77,6 +98,7 @@ export function PaymentModal() {
     paymentPlan,
     setUserPlan,
     walletBalance,
+    solPrice,
   } = useAppStore();
 
   const [billing, setBilling] = useState<'monthly' | 'annual'>('monthly');
@@ -94,10 +116,12 @@ export function PaymentModal() {
   const planKey = (paymentPlan || 'pro') as PlanKey;
   const plan = PLAN_CONFIG[planKey] || PLAN_CONFIG.pro;
   const PlanIcon = plan.icon;
+  const pc = PLAN_COLORS[planKey] || PLAN_COLORS.pro;
 
   const price = billing === 'monthly' ? plan.monthlyPrice : plan.annualPrice;
   const monthlyEquivalent = billing === 'annual' ? (plan.annualPrice / 12).toFixed(2) : null;
-  const solEquivalent = (price / SOL_PRICE_USD).toFixed(4);
+  const solPriceUsd = solPrice || 86;
+  const solEquivalent = (price / solPriceUsd).toFixed(4);
   const savings = billing === 'annual' ? plan.monthlyPrice * 12 - plan.annualPrice : 0;
 
   const solBalanceSufficient = walletBalance >= parseFloat(solEquivalent);
@@ -176,7 +200,7 @@ export function PaymentModal() {
           };
 
           if (verifyData.success) {
-            setUserPlan(verifyData.plan as 'pro' | 'elite');
+            setUserPlan(verifyData.plan as 'pro' | 'elite' | 'ultimate');
             setPaymentSuccess(true);
             toast.success('Plan upgraded!', {
               description: `You are now on the ${verifyData.plan.toUpperCase()} plan`,
@@ -198,7 +222,7 @@ export function PaymentModal() {
 
   const simulatePaymentSuccess = async () => {
     await new Promise((resolve) => setTimeout(resolve, 1500));
-    setUserPlan(planKey as 'pro' | 'elite');
+    setUserPlan(planKey as 'pro' | 'elite' | 'ultimate');
     setPaymentSuccess(true);
     toast.success('Plan upgraded!', {
       description: `You are now on the ${plan.name} plan`,
@@ -215,9 +239,11 @@ export function PaymentModal() {
       <DialogContent className="sm:max-w-[500px] bg-[#0f0f18] border-white/10 text-foreground p-0 overflow-hidden">
         {/* Header gradient bar */}
         <div className={`h-1 w-full bg-gradient-to-r ${
-          planKey === 'elite'
-            ? 'from-yellow-500 via-amber-400 to-yellow-500'
-            : 'from-purple-500 via-cyan-400 to-purple-500'
+          planKey === 'ultimate'
+            ? 'from-cyan-500 via-blue-400 to-cyan-500'
+            : planKey === 'elite'
+              ? 'from-yellow-500 via-amber-400 to-yellow-500'
+              : 'from-purple-500 via-cyan-400 to-purple-500'
         }`} />
 
         <div className="p-6 pt-5">
@@ -227,11 +253,7 @@ export function PaymentModal() {
                 <PlanIcon className="w-5 h-5 text-white" />
               </div>
               <DialogTitle className="text-lg">Upgrade to {plan.name}</DialogTitle>
-              <Badge className={`text-[9px] h-4 px-1.5 ${
-                planKey === 'elite'
-                  ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
-                  : 'bg-purple-500/20 text-purple-400 border-purple-500/30'
-              }`}>
+              <Badge className={`text-[9px] h-4 px-1.5 ${pc.bg} ${pc.text} ${pc.border}`}>
                 {plan.name.toUpperCase()}
               </Badge>
             </div>
@@ -254,9 +276,7 @@ export function PaymentModal() {
                   animate={{ scale: 1 }}
                   transition={{ type: 'spring', stiffness: 200, delay: 0.1 }}
                 >
-                  <CheckCircle2 className={`w-16 h-16 mb-4 ${
-                    planKey === 'elite' ? 'text-yellow-400' : 'text-purple-400'
-                  }`} />
+                  <CheckCircle2 className={`w-16 h-16 mb-4 ${pc.text}`} />
                 </motion.div>
                 <h3 className="text-lg font-semibold mb-1">Welcome to {plan.name}!</h3>
                 <p className="text-sm text-muted-foreground mb-5">
@@ -275,9 +295,7 @@ export function PaymentModal() {
                         transition={{ delay: 0.2 + idx * 0.1 }}
                         className="flex items-center gap-2"
                       >
-                        <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${
-                          planKey === 'elite' ? 'text-yellow-400' : 'text-purple-400'
-                        }`} />
+                        <CheckCircle2 className={`w-3.5 h-3.5 shrink-0 ${pc.text}`} />
                         <span className="text-xs text-foreground">{benefit}</span>
                       </motion.div>
                     ))}
@@ -312,9 +330,9 @@ export function PaymentModal() {
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                       style={billing === 'monthly' ? {
-                        background: planKey === 'elite' ? 'rgba(234,179,8,0.2)' : 'rgba(168,85,247,0.2)',
-                        color: planKey === 'elite' ? '#facc15' : '#a855f7',
-                        borderColor: planKey === 'elite' ? 'rgba(234,179,8,0.3)' : 'rgba(168,85,247,0.3)',
+                        background: pc.hexBg,
+                        color: pc.hex,
+                        borderColor: pc.hexBorder,
                         borderWidth: '1px',
                         borderStyle: 'solid',
                       } : {}}
@@ -329,9 +347,9 @@ export function PaymentModal() {
                           : 'text-muted-foreground hover:text-foreground'
                       }`}
                       style={billing === 'annual' ? {
-                        background: planKey === 'elite' ? 'rgba(234,179,8,0.2)' : 'rgba(168,85,247,0.2)',
-                        color: planKey === 'elite' ? '#facc15' : '#a855f7',
-                        borderColor: planKey === 'elite' ? 'rgba(234,179,8,0.3)' : 'rgba(168,85,247,0.3)',
+                        background: pc.hexBg,
+                        color: pc.hex,
+                        borderColor: pc.hexBorder,
                         borderWidth: '1px',
                         borderStyle: 'solid',
                       } : {}}
@@ -537,9 +555,7 @@ export function PaymentModal() {
                   <div className="grid grid-cols-2 gap-1.5">
                     {plan.benefits.slice(0, 4).map((benefit, idx) => (
                       <div key={idx} className="flex items-center gap-1.5">
-                        <Star className={`w-3 h-3 shrink-0 ${
-                          planKey === 'elite' ? 'text-yellow-400' : 'text-purple-400'
-                        }`} />
+                        <Star className={`w-3 h-3 shrink-0 ${pc.text}`} />
                         <span className="text-[10px] text-muted-foreground">{benefit}</span>
                       </div>
                     ))}

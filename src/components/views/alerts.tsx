@@ -88,7 +88,7 @@ function AlertCard({ alert, onRead, onDelete }: { alert: any; onRead: () => void
 }
 
 export function AlertsView() {
-  const { alerts, markAlertRead } = useAppStore();
+  const { alerts, markAlertRead, markAllAlertsRead, removeAlert } = useAppStore();
   const [filter, setFilter] = useState('all');
 
   const filteredAlerts = filter === 'all' 
@@ -98,7 +98,7 @@ export function AlertsView() {
   const unreadCount = alerts.filter(a => !a.isRead).length;
 
   const markAllRead = () => {
-    alerts.filter(a => !a.isRead).forEach(a => markAlertRead(a.id));
+    markAllAlertsRead();
   };
 
   return (
@@ -161,7 +161,7 @@ export function AlertsView() {
                   key={alert.id}
                   alert={alert}
                   onRead={() => markAlertRead(alert.id)}
-                  onDelete={() => {}}
+                  onDelete={() => removeAlert(alert.id)}
                 />
               ))}
             </div>

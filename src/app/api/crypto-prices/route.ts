@@ -5,13 +5,16 @@ let cachedPrices: { prices: Record<string, { price: number; change24h: number }>
 const CACHE_TTL = 60_000; // 60 seconds
 
 const COIN_IDS = [
-  'solana', 'dogwifhat', 'bonk', 'pepe', 'floki', 'dogecoin',
-  'shiba-inu', 'book-of-meme', 'goatseus-maximus', 'neiro'
+  'solana', 'dogwifcoin', 'bonk', 'pepe', 'floki', 'dogecoin',
+  'shiba-inu', 'book-of-meme', 'goatseus-maximus', 'neiro',
+  'turbo', 'slerf', 'wen-2', 'myro', 'ponke', 'popcat',
+  'cat-in-a-dogs-world', 'moo-deng', 'jupiter-exchange-solana', 'render-token',
+  'memecoin-5', 'baby-doge-coin', 'fight-2',
 ];
 
 const SYMBOL_MAP: Record<string, string> = {
   'SOL': 'solana',
-  'WIF': 'dogwifhat',
+  'WIF': 'dogwifcoin',
   'BONK': 'bonk',
   'PEPE': 'pepe',
   'FLOKI': 'floki',
@@ -20,6 +23,19 @@ const SYMBOL_MAP: Record<string, string> = {
   'BOME': 'book-of-meme',
   'GOAT': 'goatseus-maximus',
   'NEIRO': 'neiro',
+  'TURBO': 'turbo',
+  'SLERF': 'slerf',
+  'WEN': 'wen-2',
+  'MYRO': 'myro',
+  'PONKE': 'ponke',
+  'POPCAT': 'popcat',
+  'MEW': 'cat-in-a-dogs-world',
+  'MOODENG': 'moo-deng',
+  'JUP': 'jupiter-exchange-solana',
+  'RNDR': 'render-token',
+  'MEME': 'memecoin-5',
+  'BABYDOGE': 'baby-doge-coin',
+  'FIGHT': 'fight-2',
 };
 
 // Fallback prices in case API fails (updated from CoinGecko, March 2025)
@@ -34,6 +50,19 @@ const FALLBACK_PRICES: Record<string, { price: number; change24h: number }> = {
   'BOME': { price: 0.000547, change24h: -2.1 },
   'GOAT': { price: 0.01739, change24h: 1.7 },
   'NEIRO': { price: 0.0000976, change24h: 4.5 },
+  'TURBO': { price: 0.001, change24h: -3.1 },
+  'SLERF': { price: 0.015, change24h: 7.8 },
+  'WEN': { price: 0.00004, change24h: -1.5 },
+  'MYRO': { price: 0.005, change24h: 4.2 },
+  'PONKE': { price: 0.02, change24h: -5.1 },
+  'POPCAT': { price: 0.15, change24h: 12.3 },
+  'MEW': { price: 0.001, change24h: -2.7 },
+  'MOODENG': { price: 0.005, change24h: 15.2 },
+  'JUP': { price: 0.40, change24h: 2.3 },
+  'RNDR': { price: 1.90, change24h: -1.8 },
+  'MEME': { price: 0.001, change24h: 1.2 },
+  'BABYDOGE': { price: 0.000000001, change24h: 3.1 },
+  'FIGHT': { price: 0.0005, change24h: -6.8 },
 };
 
 async function fetchCryptoPrices() {

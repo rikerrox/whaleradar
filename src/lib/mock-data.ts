@@ -82,9 +82,11 @@ export interface ActivePosition {
   allocation: number;
 }
 
-export function calculatePositions(solPrice: number): ActivePosition[] {
+export function calculatePositions(solPrice: number, liveTokenPrices?: Record<string, { price: number; change24h: number }>): ActivePosition[] {
   // SOL price at entry was ~$85 (slightly lower than current)
   const solPriceAtEntry = 85;
+
+  const getPrice = (symbol: string) => liveTokenPrices?.[symbol]?.price ?? REAL_TOKEN_PRICES[symbol]?.price ?? 0;
 
   const positions: ActivePosition[] = [
     {
@@ -93,7 +95,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 8.5,
       tokenAmount: Math.floor((8.5 * solPriceAtEntry) / 0.32),
       entryPrice: 0.32,
-      currentPrice: REAL_TOKEN_PRICES['WIF'].price,
+      currentPrice: getPrice('WIF'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -102,7 +104,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 5.2,
       tokenAmount: Math.floor((5.2 * solPriceAtEntry) / 0.0000045),
       entryPrice: 0.0000045,
-      currentPrice: REAL_TOKEN_PRICES['BONK'].price,
+      currentPrice: getPrice('BONK'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -111,7 +113,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 6.0,
       tokenAmount: Math.floor((6.0 * solPriceAtEntry) / 0.0000028),
       entryPrice: 0.0000028,
-      currentPrice: REAL_TOKEN_PRICES['PEPE'].price,
+      currentPrice: getPrice('PEPE'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -120,7 +122,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 4.5,
       tokenAmount: Math.floor((4.5 * solPriceAtEntry) / 0.013),
       entryPrice: 0.013,
-      currentPrice: REAL_TOKEN_PRICES['GOAT'].price,
+      currentPrice: getPrice('GOAT'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -129,7 +131,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 3.8,
       tokenAmount: Math.floor((3.8 * solPriceAtEntry) / 0.00045),
       entryPrice: 0.00045,
-      currentPrice: REAL_TOKEN_PRICES['BOME'].price,
+      currentPrice: getPrice('BOME'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -138,7 +140,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 2.5,
       tokenAmount: Math.floor((2.5 * solPriceAtEntry) / 0.000025),
       entryPrice: 0.000025,
-      currentPrice: REAL_TOKEN_PRICES['FLOKI'].price,
+      currentPrice: getPrice('FLOKI'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -147,7 +149,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 3.2,
       tokenAmount: Math.floor((3.2 * solPriceAtEntry) / 0.12),
       entryPrice: 0.12,
-      currentPrice: REAL_TOKEN_PRICES['POPCAT'].price,
+      currentPrice: getPrice('POPCAT'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -156,7 +158,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 4.0,
       tokenAmount: Math.floor((4.0 * solPriceAtEntry) / 0.30),
       entryPrice: 0.30,
-      currentPrice: REAL_TOKEN_PRICES['JUP'].price,
+      currentPrice: getPrice('JUP'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -165,7 +167,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 3.5,
       tokenAmount: Math.floor((3.5 * solPriceAtEntry) / 1.50),
       entryPrice: 1.50,
-      currentPrice: REAL_TOKEN_PRICES['RNDR'].price,
+      currentPrice: getPrice('RNDR'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -174,7 +176,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 2.0,
       tokenAmount: Math.floor((2.0 * solPriceAtEntry) / 0.0008),
       entryPrice: 0.0008,
-      currentPrice: REAL_TOKEN_PRICES['TURBO'].price,
+      currentPrice: getPrice('TURBO'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -183,7 +185,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 2.8,
       tokenAmount: Math.floor((2.8 * solPriceAtEntry) / 0.012),
       entryPrice: 0.012,
-      currentPrice: REAL_TOKEN_PRICES['SLERF'].price,
+      currentPrice: getPrice('SLERF'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
     {
@@ -192,7 +194,7 @@ export function calculatePositions(solPrice: number): ActivePosition[] {
       solInvested: 1.5,
       tokenAmount: Math.floor((1.5 * solPriceAtEntry) / 0.004),
       entryPrice: 0.004,
-      currentPrice: REAL_TOKEN_PRICES['MYRO'].price,
+      currentPrice: getPrice('MYRO'),
       currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
     },
   ];
@@ -357,7 +359,7 @@ export function generateMockTokens(): MemeToken[] {
   });
 }
 
-export function generateMockCopyTrades(solPrice: number = 130): CopyTrade[] {
+export function generateMockCopyTrades(solPrice: number = 86): CopyTrade[] {
   const solAtEntry = 85;
   return [
     {
@@ -475,65 +477,39 @@ export function generateMockCopyTrades(solPrice: number = 130): CopyTrade[] {
   ];
 }
 
-export function generateMockAlerts(solPrice: number = 130): AlertItem[] {
-  return [
-    {
-      id: 'alert-1',
-      type: 'whale_buy',
-      title: 'Whale Buy Detected',
-      message: `Smart Whale Alpha bought 8.5 SOL of WIF (~$${(8.5 * solPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })})`,
-      token: 'WIF',
-      isRead: false,
-      channel: 'browser',
-      timestamp: hoursAgo(0.1),
-    },
-    {
-      id: 'alert-2',
-      type: 'volume_spike',
-      title: 'Volume Spike',
-      message: 'BONK volume up 450% in last hour',
-      token: 'BONK',
-      isRead: false,
-      channel: 'browser',
-      timestamp: hoursAgo(0.5),
-    },
-    {
-      id: 'alert-3',
-      type: 'copy_trade',
-      title: 'Copy Trade Executed',
-      message: `Copied Sol Sniper: Bought PEPE worth 6 SOL (~$${(6 * solPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })})`,
-      token: 'PEPE',
-      isRead: true,
-      channel: 'browser',
-      timestamp: hoursAgo(1),
-    },
-    {
-      id: 'alert-4',
-      type: 'new_token',
-      title: 'New Trending Token',
-      message: 'GOAT is trending with 200+ whale entries',
-      token: 'GOAT',
-      isRead: true,
-      channel: 'browser',
-      timestamp: hoursAgo(2),
-    },
-    {
-      id: 'alert-5',
-      type: 'whale_sell',
-      title: 'Large Sell-off Detected',
-      message: `Degen Master sold 5.2 SOL of BONK (~$${(5.2 * solPrice).toLocaleString(undefined, { maximumFractionDigits: 0 })})`,
-      token: 'BONK',
-      isRead: true,
-      channel: 'browser',
-      timestamp: hoursAgo(3),
-    },
+export function generateMockAlerts(solPrice: number = 86): AlertItem[] {
+  const whaleNames = ['Smart Whale Alpha', 'Degen Master', 'Sol Sniper', 'Whale Hunter', 'CryptoKing', 'DeFi Wizard', 'Token Guru', 'Blockchain Boss'];
+  const alertTemplates: Array<{ type: AlertItem['type']; title: string; getMessage: (whale: string, sol: number, symbol: string) => string; token: string }> = [
+    { type: 'whale_buy', title: 'Whale Buy Detected', getMessage: (w, s, sym) => `${w} bought ${(Math.random() * 10 + 1).toFixed(1)} SOL of ${sym} (~$${((Math.random() * 10 + 1) * s).toLocaleString(undefined, { maximumFractionDigits: 0 })})`, token: 'WIF' },
+    { type: 'whale_buy', title: 'Whale Buy Detected', getMessage: (w, s, sym) => `${w} bought ${(Math.random() * 15 + 2).toFixed(1)} SOL of ${sym} (~$${((Math.random() * 15 + 2) * s).toLocaleString(undefined, { maximumFractionDigits: 0 })})`, token: 'BONK' },
+    { type: 'whale_sell', title: 'Large Sell-off Detected', getMessage: (w, s, sym) => `${w} sold ${(Math.random() * 8 + 1).toFixed(1)} SOL of ${sym} (~$${((Math.random() * 8 + 1) * s).toLocaleString(undefined, { maximumFractionDigits: 0 })})`, token: 'PEPE' },
+    { type: 'volume_spike', title: 'Volume Spike', getMessage: (_w, _s, sym) => `${sym} volume up ${Math.floor(Math.random() * 400 + 100)}% in last hour`, token: 'BONK' },
+    { type: 'volume_spike', title: 'Volume Spike', getMessage: (_w, _s, sym) => `${sym} volume up ${Math.floor(Math.random() * 300 + 50)}% in last hour`, token: 'GOAT' },
+    { type: 'new_token', title: 'New Trending Token', getMessage: (_w, _s, sym) => `${sym} is trending with ${Math.floor(Math.random() * 200 + 50)}+ whale entries`, token: 'POPCAT' },
+    { type: 'copy_trade', title: 'Copy Trade Executed', getMessage: (w, s, sym) => `Copied ${w}: Bought ${sym} worth ${(Math.random() * 5 + 1).toFixed(1)} SOL (~$${((Math.random() * 5 + 1) * s).toLocaleString(undefined, { maximumFractionDigits: 0 })})`, token: 'JUP' },
+    { type: 'whale_buy', title: 'Whale Buy Detected', getMessage: (w, s, sym) => `${w} bought ${(Math.random() * 20 + 3).toFixed(1)} SOL of ${sym} (~$${((Math.random() * 20 + 3) * s).toLocaleString(undefined, { maximumFractionDigits: 0 })})`, token: 'RNDR' },
   ];
+
+  const shuffled = alertTemplates.sort(() => Math.random() - 0.5).slice(0, 5);
+  return shuffled.map((tpl, i) => {
+    const whale = whaleNames[Math.floor(Math.random() * whaleNames.length)];
+    return {
+      id: `alert-${Date.now()}-${i}`,
+      type: tpl.type,
+      title: tpl.title,
+      message: tpl.getMessage(whale, solPrice, tpl.token),
+      token: tpl.token,
+      isRead: Math.random() > 0.6,
+      channel: 'browser' as const,
+      timestamp: hoursAgo(Math.random() * 4),
+    };
+  });
 }
 
 // ─── Dynamic portfolio calculation from real data ────────────────
 // IMPORTANT: Does NOT double-count. SOL invested in positions is subtracted from balance.
-export function calculatePortfolio(solBalance: number, solPrice: number, copyTrades: CopyTrade[]): PortfolioData {
-  const positions = calculatePositions(solPrice);
+export function calculatePortfolio(solBalance: number, solPrice: number, copyTrades: CopyTrade[], liveTokenPrices?: Record<string, { price: number; change24h: number }>): PortfolioData {
+  const positions = calculatePositions(solPrice, liveTokenPrices);
 
   // Total SOL invested across all positions
   const totalSolInvested = positions.reduce((sum, p) => sum + p.solInvested, 0);
@@ -625,7 +601,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'pro',
     name: 'Pro',
-    price: 49,
+    price: 9.99,
     period: 'month',
     features: [
       'Real-time whale tracking',
@@ -637,13 +613,13 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Telegram/Discord alerts',
       'Priority support',
     ],
-    highlighted: true,
+    highlighted: false,
     cta: 'Start Pro Trial',
   },
   {
     id: 'elite',
     name: 'Elite',
-    price: 149,
+    price: 19.99,
     period: 'month',
     features: [
       'Everything in Pro',
@@ -657,8 +633,26 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Early access features',
       'Referral program',
     ],
-    highlighted: false,
+    highlighted: true,
     cta: 'Go Elite',
+  },
+  {
+    id: 'ultimate',
+    name: 'Ultimate',
+    price: 29.99,
+    period: 'month',
+    features: [
+      'Everything in Elite',
+      'White-label dashboard',
+      'Custom whale strategies',
+      'Multi-wallet management',
+      'Institutional-grade analytics',
+      'Dedicated account manager',
+      'SLA guarantee',
+      'Custom API integrations',
+    ],
+    highlighted: false,
+    cta: 'Go Ultimate',
   },
 ];
 

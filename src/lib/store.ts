@@ -8,7 +8,7 @@ interface User {
   email: string | null;
   username: string | null;
   walletAddress: string | null;
-  plan: 'free' | 'pro' | 'elite';
+  plan: 'free' | 'pro' | 'elite' | 'ultimate';
   solBalance: number;
   avatar: string | null;
   createdAt: string;
@@ -50,8 +50,8 @@ interface AppState {
   setDemoMode: (demo: boolean) => void;
 
   // User Plan
-  userPlan: 'free' | 'pro' | 'elite';
-  setUserPlan: (plan: 'free' | 'pro' | 'elite') => void;
+  userPlan: 'free' | 'pro' | 'elite' | 'ultimate';
+  setUserPlan: (plan: 'free' | 'pro' | 'elite' | 'ultimate') => void;
 
   // Data
   whales: WhaleWallet[];
@@ -63,6 +63,8 @@ interface AppState {
 
   tokens: MemeToken[];
   setTokens: (tokens: MemeToken[]) => void;
+  liveTokenPrices: Record<string, { price: number; change24h: number }>;
+  fetchTokenPrices: () => Promise<void>;
 
   copyTrades: CopyTrade[];
   setCopyTrades: (trades: CopyTrade[]) => void;
@@ -72,7 +74,9 @@ interface AppState {
   alerts: AlertItem[];
   setAlerts: (alerts: AlertItem[]) => void;
   addAlert: (alert: AlertItem) => void;
+  removeAlert: (id: string) => void;
   markAlertRead: (id: string) => void;
+  markAllAlertsRead: () => void;
 
   portfolio: PortfolioData;
   setPortfolio: (data: PortfolioData) => void;
@@ -147,10 +151,10 @@ export const useAppStore = create<AppState>((set, get) => ({
         const newPrice = data.price;
         const change24h = data.change24h ?? 0;
         set({ solPrice: newPrice, solPriceChange24h: change24h, solPriceLoaded: true });
-        // Recalculate portfolio with new SOL price
+        // Recalculate portfolio with new SOL price and live token prices
         const state = get();
         const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
-        const portfolio = calculatePortfolio(solBalance, newPrice, state.copyTrades);
+        const portfolio = calculatePortfolio(solBalance, newPrice, state.copyTrades, state.liveTokenPrices);
         set({ portfolio });
       }
     } catch {
@@ -320,7 +324,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({
           walletBalance: data.solBalance,
           walletAddress: data.walletAddress,
-          userPlan: data.plan as 'free' | 'pro' | 'elite',
+          userPlan: data.plan as 'free' | 'pro' | 'elite' | 'ultimate',
         });
       }
     } catch {
@@ -358,6 +362,33 @@ export const useAppStore = create<AppState>((set, get) => ({
 
   tokens: [],
   setTokens: (tokens) => set({ tokens }),
+  liveTokenPrices: {},
+  fetchTokenPrices: async () => {
+    try {
+      const res = await fetch('/api/crypto-prices');
+      if (res.ok) {
+        const { prices } = await res.json();
+        if (!prices) return;
+        set({ liveTokenPrices: prices });
+        // Update token prices in the token list
+        const state = get();
+        const updatedTokens = state.tokens.map((token) => {
+          const live = prices[token.symbol];
+          if (live) {
+            return { ...token, price: live.price, priceChange24h: live.change24h };
+          }
+          return token;
+        });
+        set({ tokens: updatedTokens });
+        // Recalculate portfolio with live token prices
+        const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+        const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades, prices);
+        set({ portfolio });
+      }
+    } catch {
+      // Keep existing prices
+    }
+  },
 
   copyTrades: [],
   setCopyTrades: (trades) => {
@@ -365,13 +396,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     // Recalculate portfolio when copy trades change
     const state = get();
     const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
-    const portfolio = calculatePortfolio(solBalance, state.solPrice, trades);
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, trades, state.liveTokenPrices);
     set({ portfolio });
   },
   addCopyTrade: (trade) => set((state) => {
     const newTrades = [trade, ...state.copyTrades];
     const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
-    const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades);
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades, state.liveTokenPrices);
     return { copyTrades: newTrades, portfolio };
   }),
   updateCopyTradeStatus: (id, status, pnl) => set((state) => {
@@ -379,7 +410,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       ct.id === id ? { ...ct, status, pnl: pnl !== undefined ? pnl : ct.pnl, txHash: status === 'executed' ? `${Math.random().toString(36).slice(2, 10)}...${Math.random().toString(36).slice(2, 6)}` : ct.txHash } : ct
     );
     const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
-    const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades);
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades, state.liveTokenPrices);
     return { copyTrades: newTrades, portfolio };
   }),
 
@@ -388,8 +419,14 @@ export const useAppStore = create<AppState>((set, get) => ({
   addAlert: (alert) => set((state) => ({
     alerts: [alert, ...state.alerts]
   })),
+  removeAlert: (id) => set((state) => ({
+    alerts: state.alerts.filter(a => a.id !== id)
+  })),
   markAlertRead: (id) => set((state) => ({
     alerts: state.alerts.map(a => a.id === id ? { ...a, isRead: true } : a)
+  })),
+  markAllAlertsRead: () => set((state) => ({
+    alerts: state.alerts.map(a => ({ ...a, isRead: true }))
   })),
 
   portfolio: calculatePortfolio(DEFAULT_SOL_BALANCE, DEFAULT_SOL_PRICE, generateMockCopyTrades(DEFAULT_SOL_PRICE)),
@@ -397,7 +434,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   recalculatePortfolio: () => {
     const state = get();
     const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
-    const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades);
+    const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades, state.liveTokenPrices);
     set({ portfolio });
   },
 

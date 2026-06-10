@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
       },
       pro: {
         name: 'Pro',
-        price: 29,
+        price: 9.99,
         features: [
           'Advanced whale tracking',
           'Unlimited alerts',
@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
       },
       elite: {
         name: 'Elite',
-        price: 99,
+        price: 19.99,
         features: [
           'All Pro features',
           'Unlimited copy trading',
@@ -92,6 +92,25 @@ export async function GET(request: NextRequest) {
         ],
         limits: {
           maxCopyTrades: -1, // unlimited
+          maxAlertsPerDay: -1,
+          maxWatchlist: -1,
+          maxWhaleFollows: -1,
+        },
+      },
+      ultimate: {
+        name: 'Ultimate',
+        price: 29.99,
+        features: [
+          'All Elite features',
+          'White-label dashboard',
+          'Custom whale strategies',
+          'Multi-wallet management',
+          'Institutional-grade analytics',
+          'SLA guarantee',
+          'Custom API integrations',
+        ],
+        limits: {
+          maxCopyTrades: -1,
           maxAlertsPerDay: -1,
           maxWatchlist: -1,
           maxWhaleFollows: -1,

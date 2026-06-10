@@ -2,8 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 
 const PLAN_PRICES: Record<string, { monthly: number; annual: number }> = {
-  pro: { monthly: 49, annual: 470 },
-  elite: { monthly: 149, annual: 1430 },
+  pro: { monthly: 9.99, annual: 95.90 },
+  elite: { monthly: 19.99, annual: 191.90 },
+  ultimate: { monthly: 29.99, annual: 287.90 },
 };
 
 export async function POST(request: NextRequest) {

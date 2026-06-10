@@ -65,7 +65,7 @@ function CircularProgress({ value, size = 64, strokeWidth = 5 }: { value: number
 
 export function TradeDetailModal({ open, onOpenChange, trade, position, onClosePosition, onCancelTrade, onRetryTrade }: TradeDetailModalProps) {
   const { solPrice } = useAppStore();
-  const solPriceUsd = solPrice > 0 ? solPrice : 85;
+  const solPriceUsd = solPrice > 0 ? solPrice : 86;
   const chartData = useMemo(() => generateTokenChartData(), [open]);
 
   // Determine data source: trade or position

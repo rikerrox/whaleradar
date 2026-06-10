@@ -28,7 +28,6 @@ import {
   Sparkles,
 } from 'lucide-react';
 
-const SOL_PRICE_USD = 142.58;
 const QUICK_AMOUNTS = [1, 5, 10, 25, 50];
 
 interface DepositRecord {
@@ -46,6 +45,7 @@ export function DepositModal() {
     walletBalance,
     setWalletBalance,
     isDemoMode,
+    solPrice,
   } = useAppStore();
 
   const [amount, setAmount] = useState('');
@@ -55,7 +55,8 @@ export function DepositModal() {
   const [depositHistory, setDepositHistory] = useState<DepositRecord[]>([]);
 
   const parsedAmount = parseFloat(amount) || 0;
-  const usdEquivalent = parsedAmount * SOL_PRICE_USD;
+  const solPriceUsd = solPrice || 86;
+  const usdEquivalent = parsedAmount * solPriceUsd;
 
   // Load deposit history
   useEffect(() => {
@@ -295,7 +296,7 @@ export function DepositModal() {
                       animate={{ opacity: 1 }}
                       className="text-xs text-muted-foreground"
                     >
-                      ≈ ${usdEquivalent.toFixed(2)} USD @ ${SOL_PRICE_USD}/SOL
+                      ≈ ${usdEquivalent.toFixed(2)} USD @ ${solPriceUsd}/SOL
                     </motion.p>
                   )}
                 </div>

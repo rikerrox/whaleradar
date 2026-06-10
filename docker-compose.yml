@@ -17,6 +17,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      db-init:
+        condition: service_completed_successfully
     networks:
       - whaleradar
 
@@ -24,6 +26,8 @@ services:
     image: postgres:16-alpine
     container_name: whaleradar-db
     restart: unless-stopped
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -35,6 +39,21 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - whaleradar
+
+  db-init:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: builder
+    container_name: whaleradar-db-init
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    entrypoint: ["sh", "-c", "sleep 2 && ./node_modules/.bin/prisma db push --skip-generate"]
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - whaleradar
 
