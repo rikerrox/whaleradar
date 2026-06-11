@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export function SettingsView() {
-  const { walletAddress, walletBalance, userPlan, alerts } = useAppStore();
+  const { walletAddress, walletBalance, userPlan, alerts, setShowPaymentModal, setPaymentPlan } = useAppStore();
   
   const [notifications, setNotifications] = useState({
     whaleBuy: true,
@@ -112,7 +112,7 @@ export function SettingsView() {
                 </Badge>
               </div>
               {userPlan === 'free' && (
-                <Button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-500 text-white" size="sm">
+                <Button className="mt-4 w-full bg-gradient-to-r from-purple-600 to-purple-500 text-white" size="sm" onClick={() => { setPaymentPlan('pro'); setShowPaymentModal(true); }}>
                   Upgrade to Pro
                 </Button>
               )}

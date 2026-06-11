@@ -19,7 +19,8 @@ export function middleware(request: NextRequest) {
     const isAllowed =
       origin.includes('localhost') ||
       origin.includes('.space-z.ai') ||
-      origin.includes('127.0.0.1');
+      origin.includes('127.0.0.1') ||
+      origin.includes('80.225.227.86');
 
     if (isAllowed) {
       response.headers.set('Access-Control-Allow-Origin', origin);
