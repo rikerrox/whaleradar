@@ -14,11 +14,14 @@ import {
   Settings2, Bell, Shield, Wallet, Eye, Moon, Globe,
   Key, Volume2, Mail, MessageSquare, Smartphone,
   AlertTriangle, Lock, User, CreditCard, Palette,
-  Save, Check, ExternalLink,
+  Save, Check, ExternalLink, Crown,
 } from 'lucide-react';
 
 export function SettingsView() {
-  const { walletAddress, walletBalance, userPlan, alerts, setShowPaymentModal, setPaymentPlan } = useAppStore();
+  const { walletAddress, walletBalance, userPlan, alerts, setShowPaymentModal, setPaymentPlan, user, setUser } = useAppStore();
+  
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [adminMessage, setAdminMessage] = useState('');
   
   const [notifications, setNotifications] = useState({
     whaleBuy: true,
@@ -43,6 +46,35 @@ export function SettingsView() {
 
   const toggleNotification = (key: keyof typeof notifications) => {
     setNotifications(prev => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const handleClaimAdmin = async () => {
+    setAdminLoading(true);
+    setAdminMessage('');
+    try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('sessionToken') : null;
+      if (!token) {
+        setAdminMessage('Please log in first');
+        return;
+      }
+      const res = await fetch('/api/admin/setup', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        if (user) {
+          setUser({ ...user, role: 'admin' });
+        }
+        setAdminMessage('You are now an admin! Refresh to see the Admin Panel in the sidebar.');
+      } else {
+        setAdminMessage(data.error || 'Failed to claim admin');
+      }
+    } catch {
+      setAdminMessage('Network error');
+    } finally {
+      setAdminLoading(false);
+    }
   };
 
   return (
@@ -295,6 +327,44 @@ export function SettingsView() {
                   Active
                 </Badge>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card className="glass-card">
+            <CardHeader>
+              <CardTitle className="text-sm flex items-center gap-2">
+                <Crown className="w-4 h-4 text-yellow-400" /> Admin Access
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {user?.role === 'admin' ? (
+                <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                  <Check className="w-5 h-5 text-green-400" />
+                  <div>
+                    <p className="text-sm font-medium text-green-200">You are an Admin</p>
+                    <p className="text-xs text-green-200/70">Admin Panel is available in the sidebar</p>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <p className="text-xs text-muted-foreground">
+                    Claim admin access to manage users, view transactions, and monitor the platform. 
+                    Available only if no admin exists yet.
+                  </p>
+                  <Button
+                    onClick={handleClaimAdmin}
+                    disabled={adminLoading}
+                    className="w-full bg-yellow-500/20 text-yellow-400 hover:bg-yellow-500/30 border border-yellow-500/30"
+                  >
+                    {adminLoading ? 'Claiming...' : 'Claim Admin Access'}
+                  </Button>
+                  {adminMessage && (
+                    <p className={`text-xs ${adminMessage.includes('now an admin') ? 'text-green-400' : 'text-red-400'}`}>
+                      {adminMessage}
+                    </p>
+                  )}
+                </>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
