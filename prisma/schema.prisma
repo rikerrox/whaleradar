@@ -14,7 +14,8 @@ model User {
   passwordHash   String?
   walletAddress  String?  @unique
   avatar         String?
-  plan           String   @default("free") // free, pro, elite
+  plan           String   @default("free") // free, pro, elite, ultimate
+  role           String   @default("user") // user, admin
   solBalance     Float    @default(0)
   isActive       Boolean  @default(true)
   createdAt      DateTime @default(now())

@@ -19,6 +19,7 @@ import {
   Play,
   Plus,
   Wallet,
+  ShieldCheck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -37,7 +38,7 @@ const navItems: { icon: React.ElementType; label: string; page: PageView; badge?
 ];
 
 export function Sidebar() {
-  const { currentPage, setCurrentPage, walletAddress, walletBalance, userPlan, alerts, setSidebarOpen, isDemoMode, setShowDemoGuide, setDemoGuideStep, isAuthenticated, setShowDepositModal, logout } = useAppStore();
+  const { currentPage, setCurrentPage, walletAddress, walletBalance, userPlan, alerts, setSidebarOpen, isDemoMode, setShowDemoGuide, setDemoGuideStep, isAuthenticated, setShowDepositModal, logout, user } = useAppStore();
   const unreadAlerts = alerts.filter(a => !a.isRead).length;
 
   const handleDisconnect = () => {
@@ -151,6 +152,23 @@ export function Sidebar() {
             </button>
           );
         })}
+        {user?.role === 'admin' && (
+          <button
+            onClick={() => {
+              setCurrentPage('admin');
+              setSidebarOpen(false);
+            }}
+            className={cn(
+              'w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all duration-200',
+              currentPage === 'admin'
+                ? 'bg-[var(--sidebar-accent)] text-purple-400 font-medium'
+                : 'text-muted-foreground hover:text-foreground hover:bg-white/5'
+            )}
+          >
+            <ShieldCheck className={cn('w-4 h-4', currentPage === 'admin' && 'text-purple-400')} />
+            <span className="flex-1 text-left">Admin Panel</span>
+          </button>
+        )}
       </nav>
 
       {/* Footer */}

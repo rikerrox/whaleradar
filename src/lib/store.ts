@@ -9,6 +9,7 @@ interface User {
   username: string | null;
   walletAddress: string | null;
   plan: 'free' | 'pro' | 'elite' | 'ultimate';
+  role: 'user' | 'admin';
   solBalance: number;
   avatar: string | null;
   createdAt: string;

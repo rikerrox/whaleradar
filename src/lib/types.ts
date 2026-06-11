@@ -9,7 +9,8 @@ export type PageView =
   | 'settings'
   | 'alerts'
   | 'wallet-profile'
-  | 'coin-details';
+  | 'coin-details'
+  | 'admin';
 
 export interface WhaleWallet {
   id: string;

@@ -17,6 +17,7 @@ import { SettingsView } from '@/components/views/settings';
 import { AlertsView } from '@/components/views/alerts';
 import { WalletProfileView } from '@/components/views/wallet-profile';
 import { CoinDetailsView } from '@/components/views/coin-details';
+import { AdminView } from '@/components/views/admin';
 import { DemoWelcomeGuide } from '@/components/demo-guide';
 import { AuthModal } from '@/components/auth-modal';
 import { DepositModal } from '@/components/deposit-modal';
@@ -124,6 +125,8 @@ export function AppShell() {
         return <WalletProfileView />;
       case 'coin-details':
         return <CoinDetailsView />;
+      case 'admin':
+        return <AdminView />;
       default:
         return <LandingPage />;
     }

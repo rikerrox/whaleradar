@@ -114,7 +114,7 @@ class ApiClient {
     const response = await this.request('/auth/me');
     return this.parseResponse<{
       id: string; email: string; username: string; walletAddress: string | null;
-      plan: string; solBalance: number; stats: Record<string, unknown>;
+      plan: string; role: string; solBalance: number; stats: Record<string, unknown>;
     }>(response);
   }
 
