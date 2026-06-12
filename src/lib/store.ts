@@ -279,7 +279,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       sessionToken: null,
       walletConnected: false,
       walletAddress: null,
-      walletBalance: 0,
+  walletBalance: DEFAULT_SOL_BALANCE,
       userPlan: 'free',
       isDemoMode: false,
       currentPage: 'landing',

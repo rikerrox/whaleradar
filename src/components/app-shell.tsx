@@ -22,24 +22,25 @@ import { DemoWelcomeGuide } from '@/components/demo-guide';
 import { AuthModal } from '@/components/auth-modal';
 import { DepositModal } from '@/components/deposit-modal';
 import { PaymentModal } from '@/components/payment-modal';
-import { generateTokensFromPrices } from '@/lib/mock-data';
+import { generateTokensFromPrices, generateMockWhales, generateMockCopyTrades, generateMockTrades, DEFAULT_SOL_BALANCE } from '@/lib/mock-data';
 
 export function AppShell() {
   const { currentPage, walletConnected, isAuthenticated, sidebarOpen, setSidebarOpen } = useAppStore();
   const {
-    setWhales, setTokens, setCopyTrades, setAlerts,
+    setWhales, setTokens, setCopyTrades, setAlerts, setWalletBalance,
     addLiveTrade, restoreSession, fetchSolPrice, fetchTokenPrices, recalculatePortfolio,
   } = useAppStore();
 
-  // Initialize with empty data and fetch real prices
+  // Initialize with demo data and fetch real prices
   useEffect(() => {
-    setWhales([]);
+    setWhales(generateMockWhales());
     setTokens([]);
-    setCopyTrades([]);
+    setCopyTrades(generateMockCopyTrades());
     setAlerts([]);
+    setWalletBalance(DEFAULT_SOL_BALANCE);
     fetchSolPrice();
     fetchTokenPrices();
-  }, [setWhales, setTokens, setCopyTrades, setAlerts, fetchSolPrice, fetchTokenPrices]);
+  }, [setWhales, setTokens, setCopyTrades, setAlerts, setWalletBalance, fetchSolPrice, fetchTokenPrices]);
 
   // Refresh SOL price every 5 minutes, token prices every 60 seconds
   useEffect(() => {
@@ -49,11 +50,17 @@ export function AppShell() {
     const tokenInterval = setInterval(() => {
       fetchTokenPrices();
     }, 60000);
+    // Generate live whale trades every 15 seconds
+    const tradeInterval = setInterval(() => {
+      const newTrade = generateMockTrades(1)[0];
+      if (newTrade) addLiveTrade(newTrade);
+    }, 15000);
     return () => {
       clearInterval(solInterval);
       clearInterval(tokenInterval);
+      clearInterval(tradeInterval);
     };
-  }, [fetchSolPrice, fetchTokenPrices]);
+  }, [fetchSolPrice, fetchTokenPrices, addLiveTrade]);
 
   // Restore session on mount
   useEffect(() => {
