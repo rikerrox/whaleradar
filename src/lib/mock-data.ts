@@ -34,8 +34,8 @@ const WHALE_ADDRESSES = [
   'Ba9R4m2P8q2vMRX7vT8Wq2oMf1LpPw9V9kQ8sG9Q8sW',
 ];
 
-export const TOKEN_SYMBOLS = ['BONK', 'WIF', 'PEPE', 'FLOKI', 'MEME', 'DOGE', 'SHIB', 'TURBO', 'BOME', 'SLERF', 'WEN', 'MYRO', 'PONKE', 'POPCAT', 'MEW', 'NEIRO', 'GOAT', 'MOODENG', 'FIGHT', 'BABYDOGE'];
-export const TOKEN_NAMES = ['Bonk', 'dogwifhat', 'Pepe', 'Floki Inu', 'Memecoin', 'Dogecoin', 'Shiba Inu', 'Turbo', 'BOOK OF MEME', 'Slerf', 'Wen', 'Myro', 'Ponke', 'Popcat', 'Cat in a dogs world', 'Neiro', 'Goatseus Maximus', 'Moo Deng', 'Fight Club', 'Baby Doge'];
+export const TOKEN_SYMBOLS = ['BONK', 'WIF', 'PEPE', 'FLOKI', 'MEME', 'DOGE', 'SHIB', 'TURBO', 'BOME', 'SLERF', 'WEN', 'MYRO', 'PONKE', 'POPCAT', 'MEW', 'NEIRO', 'GOAT', 'MOODENG', 'FIGHT', 'BABYDOGE', 'TRUMP', 'CHILLGUY', 'GRIFFAIN', 'AI16Z', 'VINE', 'PNUT', 'MOG', 'RETARDIO', 'GIGACHAD', 'MICHI', 'BRETT', 'ANDY', 'TOSHI', 'SPX', 'NEAR', 'SUI'];
+export const TOKEN_NAMES = ['Bonk', 'dogwifhat', 'Pepe', 'Floki Inu', 'Memecoin', 'Dogecoin', 'Shiba Inu', 'Turbo', 'BOOK OF MEME', 'Slerf', 'Wen', 'Myro', 'Ponke', 'Popcat', 'Cat in a dogs world', 'Neiro', 'Goatseus Maximus', 'Moo Deng', 'Fight Club', 'Baby Doge', 'Official Trump', 'Chill Guy', 'Griffain', 'ai16z', 'Vine', 'Peanut the Squirrel', 'Mog Coin', 'Retardio', 'Gigachad', 'Michi', 'Brett', 'Andy', 'Toshi', 'SPX6900', 'NEAR', 'SUI'];
 export const DEX_LIST = ['Raydium', 'Orca', 'Jupiter', 'Meteora', 'Phoenix'];
 
 // ─── Default SOL balance for the demo portfolio ─────────────────
@@ -66,6 +66,22 @@ export const REAL_TOKEN_PRICES: Record<string, { price: number; change24h: numbe
   'BABYDOGE':{ price: 0.000000001, change24h: 3.1 },
   'JUP':    { price: 0.40,  change24h: 2.3 },
   'RNDR':   { price: 1.90,  change24h: -1.8 },
+  'TRUMP':  { price: 12.50, change24h: 8.2 },
+  'CHILLGUY':{ price: 0.35, change24h: -4.5 },
+  'GRIFFAIN':{ price: 0.28, change24h: 12.1 },
+  'AI16Z':  { price: 0.85,  change24h: 15.3 },
+  'VINE':   { price: 0.12,  change24h: -8.7 },
+  'PNUT':   { price: 0.65,  change24h: 6.4 },
+  'MOG':    { price: 0.0000012, change24h: 3.8 },
+  'RETARDIO':{ price: 0.18, change24h: 22.5 },
+  'GIGACHAD':{ price: 0.025, change24h: -3.2 },
+  'MICHI':  { price: 0.08,  change24h: 9.1 },
+  'BRETT':  { price: 0.15,  change24h: 5.7 },
+  'ANDY':   { price: 0.04,  change24h: -2.3 },
+  'TOSHI':  { price: 0.00045, change24h: 7.8 },
+  'SPX':    { price: 1.25,  change24h: 11.4 },
+  'NEAR':   { price: 5.80,  change24h: 2.1 },
+  'SUI':    { price: 3.45,  change24h: 4.6 },
 };
 
 // ─── Active position definitions ───────────────────────────────

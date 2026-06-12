@@ -107,7 +107,12 @@ function CopyTradeCard({ trade }: { trade: CopyTrade }) {
       </div>
 
       <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/5">
-        <Button variant="ghost" size="sm" className="h-7 text-xs flex-1">
+        <Button variant="ghost" size="sm" className="h-7 text-xs flex-1" onClick={() => {
+          toast.info(`${trade.tokenSymbol} Trade Details`, {
+            description: `Whale: ${trade.whaleLabel} | Type: ${trade.type.toUpperCase()} | Amount: ${trade.amount} SOL | Copy: ${trade.copyPercent}% | Status: ${trade.status}${trade.pnl !== null ? ` | PnL: $${trade.pnl}` : ''}${trade.txHash ? ` | Tx: ${trade.txHash}` : ''}`,
+            duration: 5000,
+          });
+        }}>
           <Eye className="w-3 h-3 mr-1" /> View
         </Button>
         {trade.status === 'pending' && (
@@ -538,8 +543,8 @@ export function CopyTradingView() {
   const { copyTrades } = useAppStore();
   const [tab, setTab] = useState('active');
 
-  const activeTrades = copyTrades.filter(t => t.status === 'pending' || t.status === 'executed');
-  const completedTrades = copyTrades.filter(t => t.status === 'failed' || t.status === 'cancelled');
+  const activeTrades = copyTrades.filter(t => t.status === 'pending');
+  const completedTrades = copyTrades.filter(t => t.status === 'executed' || t.status === 'failed' || t.status === 'cancelled');
 
   return (
     <div className="space-y-4">

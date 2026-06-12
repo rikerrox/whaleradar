@@ -9,7 +9,11 @@ const COIN_IDS = [
   'shiba-inu', 'book-of-meme', 'goatseus-maximus', 'neiro',
   'turbo', 'slerf', 'wen-2', 'myro', 'ponke', 'popcat',
   'cat-in-a-dogs-world', 'moo-deng', 'jupiter-exchange-solana', 'render-token',
-  'memecoin-5', 'baby-doge-coin', 'fight-2',
+  'memecoin', 'baby-doge-coin', 'fight-2',
+  'official-trump', 'chill-guy', 'griffain', 'ai16z',
+  'vine-2', 'peanut-the-squirrel', 'mog-coin', 'retardio',
+  'gigachad', 'michigan', 'brett', 'andy', 'toshi',
+  'spx6900', 'near', 'sui',
 ];
 
 const SYMBOL_MAP: Record<string, string> = {
@@ -33,9 +37,25 @@ const SYMBOL_MAP: Record<string, string> = {
   'MOODENG': 'moo-deng',
   'JUP': 'jupiter-exchange-solana',
   'RNDR': 'render-token',
-  'MEME': 'memecoin-5',
+  'MEME': 'memecoin',
   'BABYDOGE': 'baby-doge-coin',
   'FIGHT': 'fight-2',
+  'TRUMP': 'official-trump',
+  'CHILLGUY': 'chill-guy',
+  'GRIFFAIN': 'griffain',
+  'AI16Z': 'ai16z',
+  'VINE': 'vine-2',
+  'PNUT': 'peanut-the-squirrel',
+  'MOG': 'mog-coin',
+  'RETARDIO': 'retardio',
+  'GIGACHAD': 'gigachad',
+  'MICHI': 'michigan',
+  'BRETT': 'brett',
+  'ANDY': 'andy',
+  'TOSHI': 'toshi',
+  'SPX': 'spx6900',
+  'NEAR': 'near',
+  'SUI': 'sui',
 };
 
 // Fallback prices in case API fails (updated from CoinGecko, March 2025)
@@ -63,6 +83,22 @@ const FALLBACK_PRICES: Record<string, { price: number; change24h: number }> = {
   'MEME': { price: 0.001, change24h: 1.2 },
   'BABYDOGE': { price: 0.000000001, change24h: 3.1 },
   'FIGHT': { price: 0.0005, change24h: -6.8 },
+  'TRUMP': { price: 12.50, change24h: 8.2 },
+  'CHILLGUY': { price: 0.35, change24h: -4.5 },
+  'GRIFFAIN': { price: 0.28, change24h: 12.1 },
+  'AI16Z': { price: 0.85, change24h: 15.3 },
+  'VINE': { price: 0.12, change24h: -8.7 },
+  'PNUT': { price: 0.65, change24h: 6.4 },
+  'MOG': { price: 0.0000012, change24h: 3.8 },
+  'RETARDIO': { price: 0.18, change24h: 22.5 },
+  'GIGACHAD': { price: 0.025, change24h: -3.2 },
+  'MICHI': { price: 0.08, change24h: 9.1 },
+  'BRETT': { price: 0.15, change24h: 5.7 },
+  'ANDY': { price: 0.04, change24h: -2.3 },
+  'TOSHI': { price: 0.00045, change24h: 7.8 },
+  'SPX': { price: 1.25, change24h: 11.4 },
+  'NEAR': { price: 5.80, change24h: 2.1 },
+  'SUI': { price: 3.45, change24h: 4.6 },
 };
 
 async function fetchCryptoPrices() {

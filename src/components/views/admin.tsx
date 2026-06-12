@@ -7,6 +7,7 @@ import { apiClient } from '@/lib/api-client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -18,7 +19,7 @@ import {
   ShieldCheck, Activity, Zap, HeartPulse,
   UserPlus, ListChecks, RefreshCw, ToggleLeft, ToggleRight,
   Crown, Mail, Wallet, ChevronUp, ChevronDown,
-  TrendingUp, Clock,
+  TrendingUp, Clock, X, Plus, CheckCircle, XCircle, Loader2,
 } from 'lucide-react';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
@@ -641,6 +642,19 @@ export function AdminView() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('overview');
 
+  // Create User dialog state
+  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserUsername, setNewUserUsername] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('');
+  const [createUserLoading, setCreateUserLoading] = useState(false);
+  const [createUserError, setCreateUserError] = useState('');
+  const [createUserSuccess, setCreateUserSuccess] = useState('');
+
+  // System Health Check state
+  const [healthChecking, setHealthChecking] = useState(false);
+  const [healthResults, setHealthResults] = useState<{ label: string; status: 'ok' | 'error' | 'checking'; detail: string }[]>([]);
+
   // Fetch admin data from API if authenticated
   const fetchAdminData = useCallback(async () => {
     if (!isAuthenticated || !apiClient.isAuthenticated()) {
@@ -737,16 +751,129 @@ export function AdminView() {
     }
   };
 
+  const handleCreateUser = async () => {
+    setCreateUserError('');
+    setCreateUserSuccess('');
+    if (!newUserEmail || !newUserPassword) {
+      setCreateUserError('Email and password are required');
+      return;
+    }
+    if (newUserPassword.length < 8) {
+      setCreateUserError('Password must be at least 8 characters');
+      return;
+    }
+    setCreateUserLoading(true);
+    try {
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail,
+          username: newUserUsername || newUserEmail.split('@')[0],
+          password: newUserPassword,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setCreateUserSuccess(`User ${newUserEmail} created successfully`);
+        setNewUserEmail('');
+        setNewUserUsername('');
+        setNewUserPassword('');
+        // Refresh user list
+        fetchAdminData();
+        setTimeout(() => setShowCreateUser(false), 2000);
+      } else {
+        setCreateUserError(data.error || 'Failed to create user');
+      }
+    } catch {
+      setCreateUserError('Network error');
+    } finally {
+      setCreateUserLoading(false);
+    }
+  };
+
+  const handleHealthCheck = async () => {
+    setHealthChecking(true);
+    setHealthResults([
+      { label: 'API Server', status: 'checking', detail: 'Testing...' },
+      { label: 'Database', status: 'checking', detail: 'Testing...' },
+      { label: 'WebSocket', status: 'checking', detail: 'Testing...' },
+      { label: 'Auth Service', status: 'checking', detail: 'Testing...' },
+      { label: 'Crypto Prices API', status: 'checking', detail: 'Testing...' },
+    ]);
+
+    const results: { label: string; status: 'ok' | 'error'; detail: string }[] = [];
+
+    // Test API Server
+    try {
+      const start = Date.now();
+      const res = await fetch('/api/sol-price');
+      const latency = Date.now() - start;
+      results.push({ label: 'API Server', status: res.ok ? 'ok' : 'error', detail: res.ok ? `${latency}ms` : `HTTP ${res.status}` });
+    } catch {
+      results.push({ label: 'API Server', status: 'error', detail: 'Unreachable' });
+    }
+
+    // Test Database (via admin stats endpoint which queries DB)
+    try {
+      const start = Date.now();
+      const res = await fetch('/api/admin/stats', {
+        headers: { Authorization: `Bearer ${apiClient.getSessionToken()}` },
+      });
+      const latency = Date.now() - start;
+      results.push({ label: 'Database', status: res.ok ? 'ok' : 'error', detail: res.ok ? `${latency}ms` : `HTTP ${res.status}` });
+    } catch {
+      results.push({ label: 'Database', status: 'error', detail: 'Unreachable' });
+    }
+
+    // Test WebSocket (check if realtime port responds)
+    try {
+      const start = Date.now();
+      const res = await fetch('/api/user/stats');
+      const latency = Date.now() - start;
+      results.push({ label: 'WebSocket', status: res.ok ? 'ok' : 'error', detail: res.ok ? `${latency}ms` : `HTTP ${res.status}` });
+    } catch {
+      results.push({ label: 'WebSocket', status: 'error', detail: 'Unreachable' });
+    }
+
+    // Test Auth Service
+    try {
+      const start = Date.now();
+      const res = await fetch('/api/auth/me', {
+        headers: { Authorization: `Bearer ${apiClient.getSessionToken()}` },
+      });
+      const latency = Date.now() - start;
+      results.push({ label: 'Auth Service', status: res.ok || res.status === 401 ? 'ok' : 'error', detail: res.ok ? `${latency}ms` : `HTTP ${res.status}` });
+    } catch {
+      results.push({ label: 'Auth Service', status: 'error', detail: 'Unreachable' });
+    }
+
+    // Test Crypto Prices API
+    try {
+      const start = Date.now();
+      const res = await fetch('/api/crypto-prices');
+      const latency = Date.now() - start;
+      results.push({ label: 'Crypto Prices API', status: res.ok ? 'ok' : 'error', detail: res.ok ? `${latency}ms` : `HTTP ${res.status}` });
+    } catch {
+      results.push({ label: 'Crypto Prices API', status: 'error', detail: 'Unreachable' });
+    }
+
+    setHealthResults(results);
+    setHealthChecking(false);
+  };
+
   const handleQuickAction = (action: string) => {
     switch (action) {
       case 'Create User':
-        // Future: open create user dialog
+        setShowCreateUser(true);
+        setCreateUserError('');
+        setCreateUserSuccess('');
         break;
       case 'View All Transactions':
         setActiveTab('transactions');
         break;
       case 'System Health Check':
-        // Future: trigger health check and show results
+        handleHealthCheck();
         break;
     }
   };
@@ -941,6 +1068,134 @@ export function AdminView() {
         <span>WhaleRadar AI Admin Panel</span>
         <span>Last updated: {new Date().toLocaleTimeString()}</span>
       </div>
+
+      {/* Create User Dialog */}
+      {showCreateUser && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card w-full max-w-md mx-4 p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <UserPlus className="w-5 h-5 text-purple-400" />
+                Create New User
+              </h3>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setShowCreateUser(false)}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            {createUserSuccess ? (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                <CheckCircle className="w-5 h-5 text-green-400" />
+                <p className="text-sm text-green-200">{createUserSuccess}</p>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Email *</label>
+                    <Input
+                      type="email"
+                      placeholder="user@example.com"
+                      value={newUserEmail}
+                      onChange={(e) => setNewUserEmail(e.target.value)}
+                      className="bg-white/5 border-white/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Username</label>
+                    <Input
+                      placeholder="Optional username"
+                      value={newUserUsername}
+                      onChange={(e) => setNewUserUsername(e.target.value)}
+                      className="bg-white/5 border-white/10"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-1 block">Password *</label>
+                    <Input
+                      type="password"
+                      placeholder="Min 8 characters"
+                      value={newUserPassword}
+                      onChange={(e) => setNewUserPassword(e.target.value)}
+                      className="bg-white/5 border-white/10"
+                    />
+                  </div>
+                </div>
+
+                {createUserError && (
+                  <p className="text-xs text-red-400">{createUserError}</p>
+                )}
+
+                <div className="flex gap-2">
+                  <Button variant="ghost" className="flex-1" onClick={() => setShowCreateUser(false)}>
+                    Cancel
+                  </Button>
+                  <Button
+                    className="flex-1 bg-purple-500 hover:bg-purple-600 text-white"
+                    onClick={handleCreateUser}
+                    disabled={createUserLoading}
+                  >
+                    {createUserLoading ? 'Creating...' : 'Create User'}
+                  </Button>
+                </div>
+              </>
+            )}
+          </motion.div>
+        </div>
+      )}
+
+      {/* Health Check Results Dialog */}
+      {healthResults.length > 0 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card w-full max-w-md mx-4 p-6 space-y-4"
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold flex items-center gap-2">
+                <HeartPulse className="w-5 h-5 text-green-400" />
+                System Health Check
+              </h3>
+              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setHealthResults([])}>
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+
+            <div className="space-y-2">
+              {healthResults.map((item) => (
+                <div key={item.label} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
+                  <div className="flex items-center gap-2">
+                    {item.status === 'checking' ? (
+                      <Loader2 className="w-4 h-4 text-yellow-400 animate-spin" />
+                    ) : item.status === 'ok' ? (
+                      <CheckCircle className="w-4 h-4 text-green-400" />
+                    ) : (
+                      <XCircle className="w-4 h-4 text-red-400" />
+                    )}
+                    <span className="text-sm">{item.label}</span>
+                  </div>
+                  <Badge variant="secondary" className={`text-[9px] h-5 ${
+                    item.status === 'ok' ? 'bg-green-500/20 text-green-400 border-green-500/30' :
+                    item.status === 'checking' ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30' :
+                    'bg-red-500/20 text-red-400 border-red-500/30'
+                  }`}>
+                    {item.detail}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end">
+              <Button variant="ghost" onClick={() => setHealthResults([])}>Close</Button>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }

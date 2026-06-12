@@ -26,7 +26,7 @@ const TOKEN_ADDRESSES: Record<string, string> = {
 
 // CoinGecko token IDs for price fetching (most reliable for non-Solana tokens)
 const COINGECKO_IDS: Record<string, string> = {
-  WIF: 'dogwifhat',
+  WIF: 'dogwifcoin',
   BONK: 'bonk',
   BOME: 'book-of-meme',
   PEPE: 'pepe',
@@ -40,6 +40,30 @@ const COINGECKO_IDS: Record<string, string> = {
   SHIB: 'shiba-inu',
   MEME: 'memecoin',
   TURBO: 'turbo',
+  WEN: 'wen-2',
+  MYRO: 'myro',
+  NEIRO: 'neiro',
+  MOODENG: 'moo-deng',
+  JUP: 'jupiter-exchange-solana',
+  RNDR: 'render-token',
+  BABYDOGE: 'baby-doge-coin',
+  FIGHT: 'fight-2',
+  TRUMP: 'official-trump',
+  CHILLGUY: 'chill-guy',
+  GRIFFAIN: 'griffain',
+  AI16Z: 'ai16z',
+  VINE: 'vine-2',
+  PNUT: 'peanut-the-squirrel',
+  MOG: 'mog-coin',
+  RETARDIO: 'retardio',
+  GIGACHAD: 'gigachad',
+  MICHI: 'michigan',
+  BRETT: 'brett',
+  ANDY: 'andy',
+  TOSHI: 'toshi',
+  SPX: 'spx6900',
+  NEAR: 'near',
+  SUI: 'sui',
 };
 
 // Cache for token prices
