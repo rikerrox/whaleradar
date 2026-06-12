@@ -371,16 +371,23 @@ export const useAppStore = create<AppState>((set, get) => ({
         const { prices } = await res.json();
         if (!prices) return;
         set({ liveTokenPrices: prices });
-        // Update token prices in the token list
+        // Populate tokens from live prices if empty
         const state = get();
-        const updatedTokens = state.tokens.map((token) => {
-          const live = prices[token.symbol];
-          if (live) {
-            return { ...token, price: live.price, priceChange24h: live.change24h };
-          }
-          return token;
-        });
-        set({ tokens: updatedTokens });
+        if (state.tokens.length === 0 && Object.keys(prices).length > 0) {
+          const { generateTokensFromPrices } = await import('./mock-data');
+          const tokens = generateTokensFromPrices(prices);
+          set({ tokens });
+        } else {
+          // Update existing token prices
+          const updatedTokens = state.tokens.map((token) => {
+            const live = prices[token.symbol];
+            if (live) {
+              return { ...token, price: live.price, priceChange24h: live.change24h };
+            }
+            return token;
+          });
+          set({ tokens: updatedTokens });
+        }
         // Recalculate portfolio with live token prices
         const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
         const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades, prices);

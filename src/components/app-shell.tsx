@@ -22,6 +22,7 @@ import { DemoWelcomeGuide } from '@/components/demo-guide';
 import { AuthModal } from '@/components/auth-modal';
 import { DepositModal } from '@/components/deposit-modal';
 import { PaymentModal } from '@/components/payment-modal';
+import { generateTokensFromPrices } from '@/lib/mock-data';
 
 export function AppShell() {
   const { currentPage, walletConnected, isAuthenticated, sidebarOpen, setSidebarOpen } = useAppStore();

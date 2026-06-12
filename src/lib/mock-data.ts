@@ -375,6 +375,36 @@ export function generateMockTokens(): MemeToken[] {
   });
 }
 
+// Generate tokens from live CoinGecko prices (no random data)
+export function generateTokensFromPrices(prices: Record<string, { price: number; change24h: number }>): MemeToken[] {
+  return TOKEN_SYMBOLS.map((symbol, i) => {
+    const priceData = prices[symbol];
+    if (!priceData) return null;
+    return {
+      id: `token-${symbol.toLowerCase()}`,
+      address: `addr-${symbol.toLowerCase()}`,
+      symbol,
+      name: TOKEN_NAMES[i] || symbol,
+      image: '',
+      price: priceData.price,
+      priceChange24h: priceData.change24h,
+      volume24h: 0,
+      marketCap: 0,
+      liquidity: 0,
+      holderCount: 0,
+      age: '',
+      whaleCount: 0,
+      rugRisk: 0,
+      trustScore: 0,
+      isTrending: false,
+      isVerified: true,
+      chain: 'solana',
+      dex: 'Raydium',
+      pairAddress: `pair-${symbol.toLowerCase()}`,
+    };
+  }).filter(Boolean) as MemeToken[];
+}
+
 export function generateMockCopyTrades(solPrice: number = 86): CopyTrade[] {
   const solAtEntry = 85;
   return [

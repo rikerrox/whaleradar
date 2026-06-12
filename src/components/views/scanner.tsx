@@ -18,7 +18,7 @@ import {
   Zap, ShieldCheck, ChevronRight, BarChart3, Activity,
   Layers, Flame,
 } from 'lucide-react';
-import { shortAddress, randomBetween } from '@/lib/mock-data';
+import { shortAddress } from '@/lib/mock-data';
 import type { MemeToken } from '@/lib/types';
 
 // ─── Helpers ──────────────────────────────────────────────────────

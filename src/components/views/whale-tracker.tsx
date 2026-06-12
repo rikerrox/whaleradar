@@ -21,7 +21,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { shortAddress, randomBetween, generateTokenChartData } from '@/lib/mock-data';
+import { shortAddress } from '@/lib/mock-data';
 import type { WhaleWallet } from '@/lib/types';
 
 // ─── Tag color map ───────────────────────────────────────────────
