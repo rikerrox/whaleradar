@@ -417,7 +417,7 @@ export const useAppStore = create<AppState>((set, get) => ({
     const newTrades = state.copyTrades.map(ct =>
       ct.id === id ? { ...ct, status, pnl: pnl !== undefined ? pnl : ct.pnl, txHash: status === 'executed' ? `${Math.random().toString(36).slice(2, 10)}...${Math.random().toString(36).slice(2, 6)}` : ct.txHash } : ct
     );
-    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
     const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades, state.liveTokenPrices);
     return { copyTrades: newTrades, portfolio };
   }),

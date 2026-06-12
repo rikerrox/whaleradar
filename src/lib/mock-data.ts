@@ -102,6 +102,13 @@ export function calculatePositions(solPrice: number, liveTokenPrices?: Record<st
   const solPriceAtEntry = 85;
   const getPrice = (symbol: string) => liveTokenPrices?.[symbol]?.price ?? REAL_TOKEN_PRICES[symbol]?.price ?? 0;
 
+  // Entry prices matching generateMockCopyTrades (what we paid per token)
+  const ENTRY_PRICES: Record<string, number> = {
+    WIF: 0.32, BONK: 0.0000045, PEPE: 0.0000028, GOAT: 0.013,
+    BOME: 0.00045, FLOKI: 0.000025, POPCAT: 0.12, JUP: 0.30,
+    RNDR: 1.50, TURBO: 0.0008, SLERF: 0.012, MYRO: 0.004,
+  };
+
   // Build positions from executed BUY copy trades
   if (copyTrades && copyTrades.length > 0) {
     const executedBuys = copyTrades.filter(ct => ct.status === 'executed' && ct.type === 'buy');
@@ -111,13 +118,13 @@ export function calculatePositions(solPrice: number, liveTokenPrices?: Record<st
       for (const ct of executedBuys) {
         if (seen.has(ct.tokenSymbol)) continue;
         seen.add(ct.tokenSymbol);
-        const tokenPrice = REAL_TOKEN_PRICES[ct.tokenSymbol]?.price ?? 0.001;
+        const entryPrice = ENTRY_PRICES[ct.tokenSymbol] ?? REAL_TOKEN_PRICES[ct.tokenSymbol]?.price ?? 0.001;
         positions.push({
           symbol: ct.tokenSymbol,
           name: ct.tokenName,
           solInvested: ct.amount,
-          tokenAmount: Math.floor((ct.amount * solPriceAtEntry) / tokenPrice),
-          entryPrice: tokenPrice,
+          tokenAmount: Math.floor((ct.amount * solPriceAtEntry) / entryPrice),
+          entryPrice,
           currentPrice: getPrice(ct.tokenSymbol),
           currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
         });
@@ -252,7 +259,7 @@ export function calculatePositions(solPrice: number, liveTokenPrices?: Record<st
   const totalSolInvested = positions.reduce((sum, p) => sum + p.solInvested, 0);
 
   // Remaining SOL after investments
-  const remainingSol = DEFAULT_SOL_BALANCE - totalSolInvested;
+  const remainingSol = Math.max(DEFAULT_SOL_BALANCE - totalSolInvested, 0);
 
   // Total portfolio value = remaining SOL value + sum of all token values
   const totalPortfolio = (remainingSol * solPrice) + positions.reduce((sum, p) => sum + (p.tokenAmount * p.currentPrice), 0);
