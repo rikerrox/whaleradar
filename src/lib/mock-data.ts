@@ -98,12 +98,45 @@ export interface ActivePosition {
   allocation: number;
 }
 
-export function calculatePositions(solPrice: number, liveTokenPrices?: Record<string, { price: number; change24h: number }>): ActivePosition[] {
-  // SOL price at entry was ~$85 (slightly lower than current)
+export function calculatePositions(solPrice: number, liveTokenPrices?: Record<string, { price: number; change24h: number }>, copyTrades?: CopyTrade[]): ActivePosition[] {
   const solPriceAtEntry = 85;
-
   const getPrice = (symbol: string) => liveTokenPrices?.[symbol]?.price ?? REAL_TOKEN_PRICES[symbol]?.price ?? 0;
 
+  // Build positions from executed BUY copy trades
+  if (copyTrades && copyTrades.length > 0) {
+    const executedBuys = copyTrades.filter(ct => ct.status === 'executed' && ct.type === 'buy');
+    if (executedBuys.length > 0) {
+      const seen = new Set<string>();
+      const positions: ActivePosition[] = [];
+      for (const ct of executedBuys) {
+        if (seen.has(ct.tokenSymbol)) continue;
+        seen.add(ct.tokenSymbol);
+        const tokenPrice = REAL_TOKEN_PRICES[ct.tokenSymbol]?.price ?? 0.001;
+        positions.push({
+          symbol: ct.tokenSymbol,
+          name: ct.tokenName,
+          solInvested: ct.amount,
+          tokenAmount: Math.floor((ct.amount * solPriceAtEntry) / tokenPrice),
+          entryPrice: tokenPrice,
+          currentPrice: getPrice(ct.tokenSymbol),
+          currentValue: 0, pnl: 0, pnlPercent: 0, allocation: 0,
+        });
+      }
+      const totalSolInvested = positions.reduce((sum, p) => sum + p.solInvested, 0);
+      const remainingSol = Math.max(DEFAULT_SOL_BALANCE - totalSolInvested, 0);
+      const totalPortfolio = (remainingSol * solPrice) + positions.reduce((sum, p) => sum + (p.tokenAmount * p.currentPrice), 0);
+      for (const pos of positions) {
+        pos.currentValue = Number((pos.tokenAmount * pos.currentPrice).toFixed(2));
+        const entryValue = pos.tokenAmount * pos.entryPrice;
+        pos.pnl = Number((pos.currentValue - entryValue).toFixed(2));
+        pos.pnlPercent = entryValue > 0 ? Number(((pos.currentValue / entryValue - 1) * 100).toFixed(1)) : 0;
+        pos.allocation = totalPortfolio > 0 ? Number(((pos.currentValue / totalPortfolio) * 100).toFixed(1)) : 0;
+      }
+      return positions;
+    }
+  }
+
+  // Fallback: default demo positions
   const positions: ActivePosition[] = [
     {
       symbol: 'WIF',
@@ -380,26 +413,29 @@ export function generateTokensFromPrices(prices: Record<string, { price: number;
   return TOKEN_SYMBOLS.map((symbol, i) => {
     const priceData = prices[symbol];
     if (!priceData) return null;
+    const price = priceData.price;
+    const marketCap = price > 0.01 ? randomBetween(50000000, 500000000) : randomBetween(500000, 50000000);
+    const liquidity = marketCap * randomBetween(0.05, 0.3);
     return {
       id: `token-${symbol.toLowerCase()}`,
       address: `addr-${symbol.toLowerCase()}`,
       symbol,
       name: TOKEN_NAMES[i] || symbol,
       image: '',
-      price: priceData.price,
+      price,
       priceChange24h: priceData.change24h,
-      volume24h: 0,
-      marketCap: 0,
-      liquidity: 0,
-      holderCount: 0,
-      age: '',
-      whaleCount: 0,
-      rugRisk: 0,
-      trustScore: 0,
-      isTrending: false,
-      isVerified: true,
+      volume24h: randomBetween(50000, 50000000),
+      marketCap,
+      liquidity,
+      holderCount: Math.floor(randomBetween(100, 100000, 0)),
+      age: randomFromArray(['<1h', '2h', '6h', '12h', '1d', '3d', '1w', '2w', '1m']),
+      whaleCount: Math.floor(randomBetween(0, 50, 0)),
+      rugRisk: randomBetween(0, 100),
+      trustScore: randomBetween(10, 100),
+      isTrending: i < 5,
+      isVerified: i < 8,
       chain: 'solana',
-      dex: 'Raydium',
+      dex: randomFromArray(DEX_LIST),
       pairAddress: `pair-${symbol.toLowerCase()}`,
     };
   }).filter(Boolean) as MemeToken[];
@@ -520,6 +556,62 @@ export function generateMockCopyTrades(solPrice: number = 86): CopyTrade[] {
       txHash: '4Hn6p...sU2v',
       createdAt: hoursAgo(24),
     },
+    {
+      id: 'ct-9',
+      whaleWalletId: 'whale-4',
+      whaleLabel: 'Meme King',
+      tokenSymbol: 'POPCAT',
+      tokenName: 'Popcat',
+      type: 'buy',
+      amount: 3.2,
+      copyPercent: 50,
+      status: 'pending',
+      pnl: null,
+      txHash: null,
+      createdAt: hoursAgo(0.05),
+    },
+    {
+      id: 'ct-10',
+      whaleWalletId: 'whale-5',
+      whaleLabel: 'Whale Shark',
+      tokenSymbol: 'FLOKI',
+      tokenName: 'Floki Inu',
+      type: 'buy',
+      amount: 2.5,
+      copyPercent: 75,
+      status: 'pending',
+      pnl: null,
+      txHash: null,
+      createdAt: hoursAgo(0.2),
+    },
+    {
+      id: 'ct-11',
+      whaleWalletId: 'whale-1',
+      whaleLabel: 'Smart Whale Alpha',
+      tokenSymbol: 'SLERF',
+      tokenName: 'Slerf',
+      type: 'buy',
+      amount: 2.8,
+      copyPercent: 100,
+      status: 'pending',
+      pnl: null,
+      txHash: null,
+      createdAt: hoursAgo(0.3),
+    },
+    {
+      id: 'ct-12',
+      whaleWalletId: 'whale-6',
+      whaleLabel: 'Diamond Hands',
+      tokenSymbol: 'MYRO',
+      tokenName: 'Myro',
+      type: 'buy',
+      amount: 1.5,
+      copyPercent: 50,
+      status: 'executed',
+      pnl: Number(((1.5 * solAtEntry / 0.004) * REAL_TOKEN_PRICES['MYRO'].price - 1.5 * solAtEntry).toFixed(2)),
+      txHash: '9Rt4k...wP7m',
+      createdAt: hoursAgo(30),
+    },
   ];
 }
 
@@ -555,7 +647,7 @@ export function generateMockAlerts(solPrice: number = 86): AlertItem[] {
 // ─── Dynamic portfolio calculation from real data ────────────────
 // IMPORTANT: Does NOT double-count. SOL invested in positions is subtracted from balance.
 export function calculatePortfolio(solBalance: number, solPrice: number, copyTrades: CopyTrade[], liveTokenPrices?: Record<string, { price: number; change24h: number }>): PortfolioData {
-  const positions = calculatePositions(solPrice, liveTokenPrices);
+  const positions = calculatePositions(solPrice, liveTokenPrices, copyTrades);
 
   // Total SOL invested across all positions
   const totalSolInvested = positions.reduce((sum, p) => sum + p.solInvested, 0);

@@ -145,9 +145,9 @@ function StatsCards() {
 }
 
 function ActivePositions() {
-  const { solPrice, liveTokenPrices } = useAppStore();
+  const { solPrice, liveTokenPrices, copyTrades } = useAppStore();
   const solPriceUsd = solPrice || 0;
-  const positions = calculatePositions(solPriceUsd, liveTokenPrices);
+  const positions = calculatePositions(solPriceUsd, liveTokenPrices, copyTrades);
 
   return (
     <Card className="glass-card h-full">
