@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { PageView, WhaleWallet, Trade, MemeToken, CopyTrade, AlertItem, PortfolioData, AppNotification } from './types';
 import { apiClient } from './api-client';
-import { calculatePortfolio, DEFAULT_SOL_BALANCE, generateMockCopyTrades } from './mock-data';
+import { calculatePortfolio, DEFAULT_SOL_BALANCE } from './mock-data';
 
 interface User {
   id: string;
@@ -133,7 +133,7 @@ interface AppState {
 }
 
 // Default SOL price used before API fetch completes
-const DEFAULT_SOL_PRICE = 86;
+const DEFAULT_SOL_PRICE = 0;
 
 export const useAppStore = create<AppState>((set, get) => ({
   // Navigation
@@ -154,7 +154,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         set({ solPrice: newPrice, solPriceChange24h: change24h, solPriceLoaded: true });
         // Recalculate portfolio with new SOL price and live token prices
         const state = get();
-        const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+        const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
         const portfolio = calculatePortfolio(solBalance, newPrice, state.copyTrades, state.liveTokenPrices);
         set({ portfolio });
       }
@@ -336,7 +336,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   // Wallet
   walletConnected: false,
   walletAddress: null,
-  walletBalance: DEFAULT_SOL_BALANCE,
+  walletBalance: 0,
   isDemoMode: false,
   setWalletConnected: (connected) => set({ walletConnected: connected }),
   setWalletAddress: (address) => set({ walletAddress: address }),
@@ -382,7 +382,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         });
         set({ tokens: updatedTokens });
         // Recalculate portfolio with live token prices
-        const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+        const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
         const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades, prices);
         set({ portfolio });
       }
@@ -396,13 +396,13 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ copyTrades: trades });
     // Recalculate portfolio when copy trades change
     const state = get();
-    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
     const portfolio = calculatePortfolio(solBalance, state.solPrice, trades, state.liveTokenPrices);
     set({ portfolio });
   },
   addCopyTrade: (trade) => set((state) => {
     const newTrades = [trade, ...state.copyTrades];
-    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
     const portfolio = calculatePortfolio(solBalance, state.solPrice, newTrades, state.liveTokenPrices);
     return { copyTrades: newTrades, portfolio };
   }),
@@ -430,11 +430,20 @@ export const useAppStore = create<AppState>((set, get) => ({
     alerts: state.alerts.map(a => ({ ...a, isRead: true }))
   })),
 
-  portfolio: calculatePortfolio(DEFAULT_SOL_BALANCE, DEFAULT_SOL_PRICE, generateMockCopyTrades(DEFAULT_SOL_PRICE)),
+  portfolio: {
+    totalValue: 0,
+    totalPnl: 0,
+    totalPnlPercent: 0,
+    solBalance: 0,
+    activePositions: 0,
+    activeCopyTrades: 0,
+    todayPnl: 0,
+    todayPnlPercent: 0,
+  },
   setPortfolio: (data) => set({ portfolio: data }),
   recalculatePortfolio: () => {
     const state = get();
-    const solBalance = state.walletBalance > 0 ? state.walletBalance : DEFAULT_SOL_BALANCE;
+    const solBalance = state.walletBalance > 0 ? state.walletBalance : 0;
     const portfolio = calculatePortfolio(solBalance, state.solPrice, state.copyTrades, state.liveTokenPrices);
     set({ portfolio });
   },

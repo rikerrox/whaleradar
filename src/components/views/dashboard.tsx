@@ -19,12 +19,19 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
-import { generatePortfolioChartData, generateTokenChartData, shortAddress, calculatePositions } from '@/lib/mock-data';
+import { shortAddress, calculatePositions } from '@/lib/mock-data';
 import type { Trade } from '@/lib/types';
 
 function PortfolioCard() {
   const { portfolio } = useAppStore();
-  const chartData = useMemo(() => generatePortfolioChartData(portfolio.totalValue), [portfolio.totalValue]);
+  const chartData = useMemo(() => {
+    if (portfolio.totalValue === 0) return [];
+    // Generate minimal chart data from portfolio value
+    return Array.from({ length: 7 }, (_, i) => ({
+      time: `Day ${i + 1}`,
+      value: portfolio.totalValue * (0.95 + Math.random() * 0.1),
+    }));
+  }, [portfolio.totalValue]);
 
   return (
     <Card className="glass-card neon-glow-purple col-span-full lg:col-span-2">
@@ -87,7 +94,7 @@ function StatsCards() {
     {
       label: 'Active Positions',
       value: portfolio.activePositions.toString(),
-      sub: '3 profitable',
+      sub: portfolio.activePositions > 0 ? `${portfolio.activePositions} active` : 'No positions yet',
       icon: BarChart3,
       color: 'text-green-400',
       bg: 'bg-green-500/10',
@@ -95,7 +102,7 @@ function StatsCards() {
     {
       label: 'Copy Trades',
       value: portfolio.activeCopyTrades.toString(),
-      sub: '2 running',
+      sub: portfolio.activeCopyTrades > 0 ? `${portfolio.activeCopyTrades} running` : 'No copy trades yet',
       icon: Copy,
       color: 'text-purple-400',
       bg: 'bg-purple-500/10',
@@ -139,7 +146,7 @@ function StatsCards() {
 
 function ActivePositions() {
   const { solPrice, liveTokenPrices } = useAppStore();
-  const solPriceUsd = solPrice || 86;
+  const solPriceUsd = solPrice || 0;
   const positions = calculatePositions(solPriceUsd, liveTokenPrices);
 
   return (
@@ -151,33 +158,41 @@ function ActivePositions() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <ScrollArea className="max-h-72">
-          <div className="space-y-3">
-            {positions.map((pos) => (
-              <div key={pos.symbol} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-cyan-500/30 flex items-center justify-center text-xs font-bold">
-                  {pos.symbol.slice(0, 2)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-sm font-medium">{pos.symbol}</span>
-                    <span className="text-xs text-muted-foreground">{pos.name}</span>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <Progress value={pos.allocation} className="h-1 w-16" />
-                    <span className="text-[10px] text-muted-foreground">{pos.allocation}%</span>
-                  </div>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-medium">${pos.currentValue.toLocaleString()}</p>
-                  <p className={`text-xs ${pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                    {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toLocaleString()} ({pos.pnlPercent}%)
-                  </p>
-                </div>
-              </div>
-            ))}
+        {positions.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <BarChart3 className="w-10 h-10 mb-3 opacity-30" />
+            <p className="text-sm">No positions yet</p>
+            <p className="text-xs mt-1">Start trading to see your positions here</p>
           </div>
-        </ScrollArea>
+        ) : (
+          <ScrollArea className="max-h-72">
+            <div className="space-y-3">
+              {positions.map((pos) => (
+                <div key={pos.symbol} className="flex items-center gap-3 p-2 rounded-lg hover:bg-white/5 transition-colors cursor-pointer">
+                  <div className="w-8 h-8 rounded-full bg-gradient-to-br from-purple-500/30 to-cyan-500/30 flex items-center justify-center text-xs font-bold">
+                    {pos.symbol.slice(0, 2)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm font-medium">{pos.symbol}</span>
+                      <span className="text-xs text-muted-foreground">{pos.name}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5">
+                      <Progress value={pos.allocation} className="h-1 w-16" />
+                      <span className="text-[10px] text-muted-foreground">{pos.allocation}%</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-medium">${pos.currentValue.toLocaleString()}</p>
+                    <p className={`text-xs ${pos.pnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                      {pos.pnl >= 0 ? '+' : ''}${pos.pnl.toLocaleString()} ({pos.pnlPercent}%)
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </ScrollArea>
+        )}
       </CardContent>
     </Card>
   );
@@ -292,7 +307,7 @@ function CopyTradeOverview() {
 }
 
 function VolumeChart() {
-  const chartData = generateTokenChartData();
+  const chartData = useMemo(() => [], []);
 
   return (
     <Card className="glass-card">
@@ -303,20 +318,28 @@ function VolumeChart() {
         </CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
-        <div className="h-40">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-              <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} />
-              <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} />
-              <Tooltip
-                contentStyle={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
-                labelStyle={{ color: '#71717a' }}
-              />
-              <Bar dataKey="volume" fill="#a855f7" radius={[2, 2, 0, 0]} opacity={0.8} />
-            </BarChart>
-          </ResponsiveContainer>
-        </div>
+        {chartData.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+            <Activity className="w-10 h-10 mb-3 opacity-30" />
+            <p className="text-sm">No volume data yet</p>
+            <p className="text-xs mt-1">Volume data will appear when trades are executed</p>
+          </div>
+        ) : (
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                <XAxis dataKey="time" stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} />
+                <YAxis stroke="rgba(255,255,255,0.2)" fontSize={10} tickLine={false} />
+                <Tooltip
+                  contentStyle={{ background: '#12121a', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '12px' }}
+                  labelStyle={{ color: '#71717a' }}
+                />
+                <Bar dataKey="volume" fill="#a855f7" radius={[2, 2, 0, 0]} opacity={0.8} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </CardContent>
     </Card>
   );

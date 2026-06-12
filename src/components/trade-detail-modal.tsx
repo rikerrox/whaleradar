@@ -22,7 +22,6 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { generateTokenChartData, randomBetween } from '@/lib/mock-data';
 import { useAppStore } from '@/lib/store';
 import type { CopyTrade } from '@/lib/types';
 
@@ -66,7 +65,7 @@ function CircularProgress({ value, size = 64, strokeWidth = 5 }: { value: number
 export function TradeDetailModal({ open, onOpenChange, trade, position, onClosePosition, onCancelTrade, onRetryTrade }: TradeDetailModalProps) {
   const { solPrice } = useAppStore();
   const solPriceUsd = solPrice > 0 ? solPrice : 86;
-  const chartData = useMemo(() => generateTokenChartData(), [open]);
+  const chartData = useMemo(() => [], [open]);
 
   // Determine data source: trade or position
   const symbol = trade?.tokenSymbol || position?.symbol || '';
@@ -77,51 +76,44 @@ export function TradeDetailModal({ open, onOpenChange, trade, position, onCloseP
   const pnlPercent = position?.pnlPercent ?? (pnl > 0 ? ((pnl / (trade?.amount ?? 1)) * 100) : 0);
 
   // Simulated metrics
-  const entryPrice = useMemo(() => randomBetween(0.0001, 0.5, 6), [open]);
-  const currentPrice = useMemo(() => {
-    const change = randomBetween(-0.3, 0.5);
-    return Number((entryPrice * (1 + change)).toFixed(6));
-  }, [open, entryPrice]);
-  const amount = trade?.amount || (position?.value ? Number((position.value / currentPrice).toFixed(0)) : 0);
-  const value = position?.value || Number((amount * currentPrice * solPriceUsd).toFixed(2));
-  const allocation = position?.allocation || randomBetween(5, 40, 0);
+  const entryPrice = useMemo(() => 0, [open]);
+  const currentPrice = useMemo(() => 0, [open]);
+  const amount = trade?.amount || (position?.value ? Number((position.value / 1).toFixed(0)) : 0);
+  const value = position?.value || Number((amount * 1 * solPriceUsd).toFixed(2));
+  const allocation = position?.allocation || 0;
 
   // AI analysis metrics
-  const aiConfidence = useMemo(() => Math.floor(randomBetween(45, 95)), [open]);
-  const riskLevel = useMemo(() => {
-    const r = Math.random();
-    return r > 0.6 ? 'low' as const : r > 0.3 ? 'medium' as const : 'high' as const;
-  }, [open]);
-  const momentum = useMemo(() => {
-    const r = Math.random();
-    return r > 0.5 ? 'bullish' as const : r > 0.2 ? 'neutral' as const : 'bearish' as const;
-  }, [open]);
+  const aiConfidence = useMemo<number | string>(() => 'N/A', [open]);
+  const riskLevel = useMemo<string>(() => 'N/A', [open]);
+  const momentum = useMemo<string>(() => 'N/A', [open]);
 
   // Whale info
   const whaleName = trade?.whaleLabel || 'Unknown Whale';
-  const whaleWinRate = useMemo(() => Math.floor(randomBetween(55, 92)), [open]);
-  const whaleRoi = useMemo(() => Math.floor(randomBetween(20, 350)), [open]);
+  const whaleWinRate = useMemo(() => 'N/A', [open]);
+  const whaleRoi = useMemo(() => 'N/A', [open]);
 
   // Risk management
-  const stopLoss = useMemo(() => randomBetween(5, 25, 1), [open]);
-  const takeProfit = useMemo(() => randomBetween(30, 100, 1), [open]);
-  const maxPosition = trade?.amount ? trade.amount * 2 : randomBetween(5, 20, 1);
-  const slippageTolerance = randomBetween(0.5, 3, 1);
+  const stopLoss = useMemo(() => 0, [open]);
+  const takeProfit = useMemo(() => 0, [open]);
+  const maxPosition = trade?.amount ? trade.amount * 2 : 0;
+  const slippageTolerance = 0;
 
-  const riskConfig = {
+  const riskConfig: Record<string, { color: string; bg: string; icon: typeof Shield }> = {
     low: { color: 'text-green-400', bg: 'bg-green-500/20 border-green-500/30', icon: Shield },
     medium: { color: 'text-yellow-400', bg: 'bg-yellow-500/20 border-yellow-500/30', icon: AlertTriangle },
     high: { color: 'text-red-400', bg: 'bg-red-500/20 border-red-500/30', icon: AlertTriangle },
+    'N/A': { color: 'text-muted-foreground', bg: 'bg-white/5 border-white/10', icon: Shield },
   };
-  const risk = riskConfig[riskLevel];
+  const risk = riskConfig[riskLevel] || riskConfig['N/A'];
   const RiskIcon = risk.icon;
 
-  const momentumConfig = {
+  const momentumConfig: Record<string, { color: string; bg: string; icon: typeof Activity }> = {
     bullish: { color: 'text-green-400', bg: 'bg-green-500/20', icon: TrendingUp },
     neutral: { color: 'text-yellow-400', bg: 'bg-yellow-500/20', icon: Activity },
     bearish: { color: 'text-red-400', bg: 'bg-red-500/20', icon: TrendingDown },
+    'N/A': { color: 'text-muted-foreground', bg: 'bg-white/5', icon: Activity },
   };
-  const mom = momentumConfig[momentum];
+  const mom = momentumConfig[momentum] || momentumConfig['N/A'];
   const MomIcon = mom.icon;
 
   const statusConfig: Record<string, { color: string; bg: string }> = {
@@ -247,11 +239,17 @@ export function TradeDetailModal({ open, onOpenChange, trade, position, onCloseP
           <div className="grid grid-cols-3 gap-4">
             {/* AI Confidence */}
             <div className="flex flex-col items-center gap-2 rounded-lg bg-white/5 border border-white/5 p-4">
-              <CircularProgress value={aiConfidence} />
+              {aiConfidence !== 'N/A' ? (
+                <CircularProgress value={Number(aiConfidence)} />
+              ) : (
+                <div className="w-16 h-16 rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
+                  <span className="text-sm font-bold text-muted-foreground">N/A</span>
+                </div>
+              )}
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">AI Confidence</p>
-                <p className={`text-xs font-medium ${aiConfidence >= 70 ? 'text-green-400' : aiConfidence >= 50 ? 'text-yellow-400' : 'text-red-400'}`}>
-                  {aiConfidence >= 70 ? 'Strong Signal' : aiConfidence >= 50 ? 'Moderate' : 'Weak'}
+                <p className="text-xs font-medium text-muted-foreground">
+                  {aiConfidence === 'N/A' ? 'N/A' : Number(aiConfidence) >= 70 ? 'Strong Signal' : Number(aiConfidence) >= 50 ? 'Moderate' : 'Weak'}
                 </p>
               </div>
             </div>
@@ -264,7 +262,7 @@ export function TradeDetailModal({ open, onOpenChange, trade, position, onCloseP
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Risk Level</p>
                 <Badge className={`text-[10px] ${risk.bg} ${risk.color} border`}>
-                  {riskLevel.toUpperCase()}
+                  {riskLevel === 'N/A' ? 'N/A' : riskLevel.toUpperCase()}
                 </Badge>
               </div>
             </div>
@@ -277,7 +275,7 @@ export function TradeDetailModal({ open, onOpenChange, trade, position, onCloseP
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Momentum</p>
                 <Badge className={`text-[10px] ${mom.bg} ${mom.color} border-0`}>
-                  {momentum.toUpperCase()}
+                  {momentum === 'N/A' ? 'N/A' : momentum.toUpperCase()}
                 </Badge>
               </div>
             </div>
@@ -303,11 +301,11 @@ export function TradeDetailModal({ open, onOpenChange, trade, position, onCloseP
             <div className="flex gap-4">
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">Win Rate</p>
-                <p className="text-sm font-bold text-green-400">{whaleWinRate}%</p>
+                <p className="text-sm font-bold text-green-400">{whaleWinRate === 'N/A' ? 'N/A' : `${whaleWinRate}%`}</p>
               </div>
               <div className="text-center">
                 <p className="text-xs text-muted-foreground">ROI</p>
-                <p className="text-sm font-bold text-cyan-400">+{whaleRoi}%</p>
+                <p className="text-sm font-bold text-cyan-400">{whaleRoi === 'N/A' ? 'N/A' : `+${whaleRoi}%`}</p>
               </div>
             </div>
           </div>

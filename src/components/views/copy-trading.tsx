@@ -17,7 +17,7 @@ import {
   DollarSign, Percent, Activity, Eye, ChevronRight,
   Plus, StopCircle, Gauge, Loader2,
 } from 'lucide-react';
-import { shortAddress, randomBetween, TOKEN_SYMBOLS, TOKEN_NAMES } from '@/lib/mock-data';
+import { shortAddress, TOKEN_SYMBOLS, TOKEN_NAMES } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import { apiClient } from '@/lib/api-client';
 import type { CopyTrade, AlertItem } from '@/lib/types';
@@ -44,8 +44,7 @@ function CopyTradeCard({ trade }: { trade: CopyTrade }) {
     toast.info('Retrying copy trade...', { description: `Re-attempting ${trade.tokenSymbol} copy trade.` });
     // Simulate execution after 2 seconds
     setTimeout(() => {
-      const pnl = randomBetween(-50, 200);
-      updateCopyTradeStatus(trade.id, 'executed', pnl);
+      updateCopyTradeStatus(trade.id, 'executed', 0);
       addAlert({
         id: `alert-${Date.now()}`,
         type: 'copy_trade',
@@ -56,7 +55,7 @@ function CopyTradeCard({ trade }: { trade: CopyTrade }) {
         channel: 'browser',
         timestamp: new Date(),
       });
-      toast.success('Copy trade executed!', { description: `${trade.tokenSymbol} - PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` });
+      toast.success('Copy trade executed!', { description: `${trade.tokenSymbol} - Awaiting real PnL data` });
     }, 2000);
   };
 
@@ -217,10 +216,9 @@ function NewCopyTradeForm() {
 
         // Simulate execution
         setTimeout(() => {
-          const pnl = randomBetween(-80, 250);
           const success = Math.random() > 0.12;
           if (success) {
-            updateCopyTradeStatusSim(newTrade.id, pnl);
+            updateCopyTradeStatusSim(newTrade.id, 0);
           } else {
             const { updateCopyTradeStatus } = useAppStore.getState();
             updateCopyTradeStatus(newTrade.id, 'failed');
@@ -251,8 +249,7 @@ function NewCopyTradeForm() {
         });
 
         setTimeout(() => {
-          const pnl = randomBetween(-80, 250);
-          updateCopyTradeStatusSim(newTrade.id, pnl);
+          updateCopyTradeStatusSim(newTrade.id, 0);
         }, 3000);
       }
     } catch {

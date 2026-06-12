@@ -22,7 +22,6 @@ import { DemoWelcomeGuide } from '@/components/demo-guide';
 import { AuthModal } from '@/components/auth-modal';
 import { DepositModal } from '@/components/deposit-modal';
 import { PaymentModal } from '@/components/payment-modal';
-import { generateMockWhales, generateMockTokens, generateMockCopyTrades, generateMockAlerts } from '@/lib/mock-data';
 
 export function AppShell() {
   const { currentPage, walletConnected, isAuthenticated, sidebarOpen, setSidebarOpen } = useAppStore();
@@ -31,19 +30,17 @@ export function AppShell() {
     addLiveTrade, restoreSession, fetchSolPrice, fetchTokenPrices, recalculatePortfolio,
   } = useAppStore();
 
-  // Initialize mock data for demo/preview and fetch real SOL price
+  // Initialize with empty data and fetch real prices
   useEffect(() => {
-    const { solPrice } = useAppStore.getState();
-    setWhales(generateMockWhales());
-    setTokens(generateMockTokens());
-    setCopyTrades(generateMockCopyTrades(solPrice));
-    setAlerts(generateMockAlerts(solPrice));
-    // Fetch real prices from CoinGecko
+    setWhales([]);
+    setTokens([]);
+    setCopyTrades([]);
+    setAlerts([]);
     fetchSolPrice();
     fetchTokenPrices();
   }, [setWhales, setTokens, setCopyTrades, setAlerts, fetchSolPrice, fetchTokenPrices]);
 
-  // Refresh SOL price every 5 minutes, token prices every 60 seconds, and alerts every 2 minutes
+  // Refresh SOL price every 5 minutes, token prices every 60 seconds
   useEffect(() => {
     const solInterval = setInterval(() => {
       fetchSolPrice();
@@ -51,19 +48,11 @@ export function AppShell() {
     const tokenInterval = setInterval(() => {
       fetchTokenPrices();
     }, 60000);
-    const alertInterval = setInterval(() => {
-      const { solPrice, alerts: currentAlerts } = useAppStore.getState();
-      const freshAlerts = generateMockAlerts(solPrice);
-      // Keep any real alerts from user actions, prepend fresh mock alerts
-      const realAlerts = currentAlerts.filter(a => !a.id.startsWith('alert-'));
-      setAlerts([...freshAlerts, ...realAlerts].slice(0, 50));
-    }, 120000);
     return () => {
       clearInterval(solInterval);
       clearInterval(tokenInterval);
-      clearInterval(alertInterval);
     };
-  }, [fetchSolPrice, fetchTokenPrices, setAlerts]);
+  }, [fetchSolPrice, fetchTokenPrices]);
 
   // Restore session on mount
   useEffect(() => {
@@ -72,20 +61,6 @@ export function AppShell() {
 
   // Connect to real-time WebSocket service
   const { connected: realtimeConnected } = useRealtime();
-
-  // Fallback: simulate live trades if WebSocket not connected
-  useEffect(() => {
-    if (realtimeConnected) return;
-    const interval = setInterval(() => {
-      const whales = generateMockWhales();
-      const whale = whales[Math.floor(Math.random() * whales.length)];
-      const trades = whale.recentTrades;
-      if (trades.length > 0) {
-        addLiveTrade({ ...trades[0], id: `live-${Date.now()}` });
-      }
-    }, 5000);
-    return () => clearInterval(interval);
-  }, [realtimeConnected, addLiveTrade]);
 
   // Auto-open sidebar on desktop
   useEffect(() => {

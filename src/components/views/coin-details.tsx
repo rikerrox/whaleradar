@@ -20,7 +20,7 @@ import {
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, BarChart, Bar,
 } from 'recharts';
-import { generateTokenChartData, shortAddress, randomBetween, DEX_LIST } from '@/lib/mock-data';
+import { shortAddress, DEX_LIST } from '@/lib/mock-data';
 import { toast } from 'sonner';
 import type { CopyTrade, AlertItem } from '@/lib/types';
 
@@ -34,29 +34,19 @@ export function CoinDetailsView() {
     tokens.find(t => t.address === selectedTokenAddress) || tokens[0]
   , [tokens, selectedTokenAddress]);
 
-  const priceData = useMemo(() => generateTokenChartData(), []);
-  const volumeData = useMemo(() => 
-    Array.from({ length: 24 }).map((_, i) => ({
-      hour: `${i}:00`,
-      volume: Number(randomBetween(50000, 2000000).toFixed(0)),
-    }))
-  , []);
+  const priceData = useMemo(() => [], []);
+  const volumeData = useMemo(() => [], []);
 
   // Generate holder distribution
-  const holderDistribution = useMemo(() => [
-    { label: 'Top 10', pct: 35 },
-    { label: 'Top 50', pct: 55 },
-    { label: 'Top 100', pct: 68 },
-    { label: 'Others', pct: 32 },
-  ], []);
+  const holderDistribution = useMemo<{ label: string; pct: number }[]>(() => [], []);
 
   // AI scores
   const aiScores = useMemo(() => ({
-    momentum: randomBetween(30, 95),
-    socialHype: randomBetween(20, 90),
-    entryTiming: randomBetween(25, 88),
-    smartMoney: randomBetween(30, 95),
-    safety: randomBetween(10, 85),
+    momentum: 'N/A',
+    socialHype: 'N/A',
+    entryTiming: 'N/A',
+    smartMoney: 'N/A',
+    safety: 'N/A',
   }), []);
 
   const isInWatchlist = watchlist.includes(token?.address || '');
@@ -85,7 +75,7 @@ export function CoinDetailsView() {
   const handleQuickBuy = async () => {
     setIsQuickBuying(true);
     await new Promise(resolve => setTimeout(resolve, 2000));
-    const pnl = randomBetween(-50, 200);
+    const pnl = 0;
     toast.success(`Quick buy executed!`, { 
       description: `Bought ${token.symbol} worth 2 SOL on ${token.dex}. Estimated PnL: ${pnl >= 0 ? '+' : ''}$${pnl.toFixed(2)}` 
     });
@@ -131,7 +121,7 @@ export function CoinDetailsView() {
 
     // Simulate execution
     setTimeout(() => {
-      const pnl = randomBetween(-100, 300);
+      const pnl = 0;
       const success = Math.random() > 0.15;
       const { updateCopyTradeStatus, addAlert } = useAppStore.getState();
       if (success) {
@@ -351,19 +341,22 @@ export function CoinDetailsView() {
               { label: 'Entry Timing', value: aiScores.entryTiming, color: 'bg-green-500' },
               { label: 'Smart Money', value: aiScores.smartMoney, color: 'bg-yellow-500' },
               { label: 'Safety Score', value: aiScores.safety, color: 'bg-red-500' },
-            ].map((item) => (
+            ].map((item) => {
+              const isNA = item.value === 'N/A';
+              const numVal = isNA ? 0 : Number(item.value);
+              return (
               <div key={item.label}>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-xs text-muted-foreground">{item.label}</span>
-                  <span className={`text-xs font-medium ${
-                    item.value >= 70 ? 'text-green-400' : item.value >= 40 ? 'text-yellow-400' : 'text-red-400'
-                  }`}>
-                    {item.value.toFixed(0)}/100
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {isNA ? 'N/A' : `${numVal.toFixed(0)}/100`}
                   </span>
                 </div>
-                <Progress value={item.value} className="h-2" />
+                {!isNA && <Progress value={numVal} className="h-2" />}
+                {isNA && <Progress value={0} className="h-2 opacity-30" />}
               </div>
-            ))}
+              );
+            })}
 
             <Separator className="bg-white/5" />
 
@@ -372,16 +365,11 @@ export function CoinDetailsView() {
               <p className="text-xs text-muted-foreground mb-2">Overall AI Score</p>
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-full border-4 border-purple-500/50 bg-purple-500/10">
                 <span className="text-2xl font-bold text-purple-400">
-                  {((aiScores.momentum + aiScores.socialHype + aiScores.entryTiming + aiScores.smartMoney + aiScores.safety) / 5).toFixed(0)}
+                  N/A
                 </span>
               </div>
               <p className="text-xs text-muted-foreground mt-2">
-                {((aiScores.momentum + aiScores.socialHype + aiScores.entryTiming + aiScores.smartMoney + aiScores.safety) / 5) >= 70
-                  ? 'Strong Buy Signal'
-                  : ((aiScores.momentum + aiScores.socialHype + aiScores.entryTiming + aiScores.smartMoney + aiScores.safety) / 5) >= 40
-                    ? 'Neutral - Caution Advised'
-                    : 'Weak - High Risk'
-                }
+                No data available
               </p>
             </div>
 

@@ -422,8 +422,7 @@ function WhaleDetailPanel({
   onNavigate: (w: WhaleWallet) => void;
   onFollowToggle: (id: string) => void;
 }) {
-  const pnlData = useMemo(() => generateWhalePnlData(whale), [whale.id]);
-  const isPositivePnl = pnlData[pnlData.length - 1]?.pnl >= 0;
+  const pnlData = useMemo(() => [], [whale.id]);
 
   return (
     <motion.div
@@ -478,15 +477,15 @@ function WhaleDetailPanel({
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div className="p-1.5 rounded-md bg-white/5">
                   <p className="text-[9px] text-muted-foreground">Track Record</p>
-                  <p className="text-xs font-semibold text-cyan-400">{randomBetween(70, 99).toFixed(0)}%</p>
+                  <p className="text-xs font-semibold text-cyan-400">N/A</p>
                 </div>
                 <div className="p-1.5 rounded-md bg-white/5">
                   <p className="text-[9px] text-muted-foreground">Consistency</p>
-                  <p className="text-xs font-semibold text-green-400">{randomBetween(60, 95).toFixed(0)}%</p>
+                  <p className="text-xs font-semibold text-green-400">N/A</p>
                 </div>
                 <div className="p-1.5 rounded-md bg-white/5">
                   <p className="text-[9px] text-muted-foreground">Risk Mgmt</p>
-                  <p className="text-xs font-semibold text-purple-400">{randomBetween(55, 92).toFixed(0)}%</p>
+                  <p className="text-xs font-semibold text-purple-400">N/A</p>
                 </div>
               </div>
             </div>
@@ -534,53 +533,12 @@ function WhaleDetailPanel({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">30-Day PnL</span>
-                <span className={`text-xs font-medium ${isPositivePnl ? 'text-green-400' : 'text-red-400'}`}>
-                  {isPositivePnl ? '+' : ''}${pnlData[pnlData.length - 1]?.pnl.toLocaleString()}
-                </span>
               </div>
-              <div className="h-40">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={pnlData}>
-                    <defs>
-                      <linearGradient id={`pnlGrad-${whale.id}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={isPositivePnl ? '#22c55e' : '#ef4444'} stopOpacity={0.3} />
-                        <stop offset="95%" stopColor={isPositivePnl ? '#22c55e' : '#ef4444'} stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
-                    <XAxis
-                      dataKey="time"
-                      stroke="rgba(255,255,255,0.2)"
-                      fontSize={9}
-                      tickLine={false}
-                      tickFormatter={(v) => v.slice(5)}
-                    />
-                    <YAxis
-                      stroke="rgba(255,255,255,0.2)"
-                      fontSize={9}
-                      tickLine={false}
-                      tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`}
-                    />
-                    <Tooltip
-                      contentStyle={{
-                        background: '#12121a',
-                        border: '1px solid rgba(255,255,255,0.1)',
-                        borderRadius: '8px',
-                        fontSize: '11px',
-                      }}
-                      labelStyle={{ color: '#71717a' }}
-                      itemStyle={{ color: isPositivePnl ? '#22c55e' : '#ef4444' }}
-                      formatter={(value: number) => [`$${value.toLocaleString()}`, 'PnL']}
-                    />
-                    <Area
-                      type="monotone"
-                      dataKey="pnl"
-                      stroke={isPositivePnl ? '#22c55e' : '#ef4444'}
-                      fill={`url(#pnlGrad-${whale.id})`}
-                      strokeWidth={2}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <div className="h-40 flex items-center justify-center text-muted-foreground">
+                <div className="text-center">
+                  <TrendingUp className="w-8 h-8 mx-auto mb-2 opacity-30" />
+                  <p className="text-xs">No PnL data yet</p>
+                </div>
               </div>
             </div>
 
